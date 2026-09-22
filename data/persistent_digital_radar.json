@@ -1,0 +1,934 @@
+{
+  "lastUpdated": "2026-09-06T14:30:49.692Z",
+  "collectionStatus": "atualizada",
+  "statusMessage": "Coleta concluída com sucesso. 6 notícias catalogadas com fonte e URL auditáveis.",
+  "totalMentions": 6,
+  "sourcesActive": [
+    "Destaque Notícias",
+    "Infonet Sergipe",
+    "Fan F1 SE",
+    "G1 Sergipe",
+    "Hora News SE",
+    "Jornal do Dia SE"
+  ],
+  "mentions": [
+    {
+      "id": "art-aHR0cHM6Ly93d3cuZGVzdGFx",
+      "title": "Prefeita retorna a Aracaju após cirurgia",
+      "source": "Destaque Notícias",
+      "url": "https://www.destaquenoticias.com.br/prefeita-retorna-a-aracaju-apos-cirurgia/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=prefeita-retorna-a-aracaju-apos-cirurgia",
+      "date": "06/09/2026",
+      "time": "09:00",
+      "timestamp": 1788685203000,
+      "candidateName": "Emília Corrêa",
+      "candidateRole": "Prefeita / Liderança",
+      "candidateParty": "PL",
+      "snippet": "A prefeita Emília Corrêa (Republicanos) retornou a Aracaju capital, nesse sábado (5), após ter ido a São Paulo para se […] The post Prefeita retorna a Aracaju após cirurgia first appeared on Destaque Noticias .",
+      "municipality": "Aracaju",
+      "sourceType": "Portal",
+      "sentiment": "POSITIVO",
+      "sentimentReason": "Texto contém termos associados a entregas, anúncios positivos ou apoios políticos.",
+      "topics": [
+        "Saúde Pública"
+      ],
+      "rawSearchQuery": "\"Emília Corrêa\" Aracaju",
+      "collectedAt": "2026-09-06T14:30:49.577Z"
+    },
+    {
+      "id": "art-aHR0cHM6Ly9pbmZvbmV0LmNv",
+      "title": "Prefeita Emília Corrêa retorna a Aracaju neste sábado após cirurgia",
+      "source": "Infonet Sergipe",
+      "url": "https://infonet.com.br/noticias/cidade/prefeita-emilia-correa-retorna-a-aracaju-neste-sabado-apos-cirurgia/",
+      "date": "05/09/2026",
+      "time": "19:21",
+      "timestamp": 1788636060000,
+      "candidateName": "Emília Corrêa",
+      "candidateRole": "Prefeita / Liderança",
+      "candidateParty": "PL",
+      "snippet": "A gestora foi submetida, na terça-feira, 1º, a uma ablação cardíaca e permaneceu em São Paulo por alguns dias O post Prefeita Emília Corrêa retorna a Aracaju neste sábado após cirurgia apareceu primeiro em O que é notícia em Sergipe .",
+      "municipality": "Aracaju",
+      "sourceType": "Portal",
+      "sentiment": "NEUTRO",
+      "sentimentReason": "Cobertura factual e informativa sem viés explícito.",
+      "topics": [
+        "Saúde Pública"
+      ],
+      "rawSearchQuery": "\"Emília Corrêa\" Aracaju",
+      "collectedAt": "2026-09-06T14:30:49.575Z"
+    },
+    {
+      "id": "art-aHR0cHM6Ly9mYW5mMS5jb20u",
+      "title": "“Não sou vice decorativo”, diz Ricardo Marques após operação da Polícia Civil na Prefeitura de Aracaju e Emsurb",
+      "source": "Fan F1 SE",
+      "url": "https://fanf1.com.br/2026/08/25/nao-sou-vice-decorativo-diz-ricardo-marques-apos-operacao-da-policia-civil-na-prefeitura-de-aracaju-e-emsurb/",
+      "date": "25/08/2026",
+      "time": "18:42",
+      "timestamp": 1787683337000,
+      "candidateName": "Yandra Moura",
+      "candidateRole": "Deputado Federal",
+      "candidateParty": "União Brasil",
+      "snippet": "O vice-prefeito de Aracaju e candidato ao Governo do estado, Ricardo Marques, afirmou nesta terça-feira, 25, que não exercerá um papel “decorativo” na administração municipal e defendeu a apuração completa da Operação Histograma, deflagrada pela Polícia Civil de Sergipe para inve...",
+      "municipality": "Aracaju",
+      "sourceType": "Notícia",
+      "sentiment": "NEGATIVO",
+      "sentimentReason": "Texto contém termos associados a críticas, investigações ou atritos institucionais.",
+      "topics": [
+        "Segurança",
+        "Eleições 2026",
+        "Gestão Pública"
+      ],
+      "rawSearchQuery": "\"Yandra Moura\" Sergipe",
+      "collectedAt": "2026-08-25T18:59:31.408Z"
+    },
+    {
+      "id": "art-aHR0cHM6Ly9nMS5nbG9iby5j",
+      "title": "O que dizem os planos de governo dos candidatos ao executivo de Sergipe",
+      "source": "G1 Sergipe",
+      "url": "https://g1.globo.com/se/sergipe/eleicoes/2026/noticia/2026/08/25/o-que-dizem-os-planos-de-governo-dos-candidatos-ao-executivo-de-sergipe.ghtml",
+      "date": "25/08/2026",
+      "time": "17:35",
+      "timestamp": 1787679346000,
+      "candidateName": "Fábio Mitidieri",
+      "candidateRole": "Governador",
+      "candidateParty": "PSD",
+      "snippet": "]]> Candidatos ao governo de Sergipe Arquivo Pessoal O g1 pesquisou algumas das propostas dos candidatos ao governo de Sergipe, nas Eleições de 2026. ✅ Clique aqui para seguir o canal do g1 SE no WhatsApp ✅Página reúne todas as informações sobre as Eleições Confira abaixo, em ord...",
+      "municipality": "Localização não identificada",
+      "sourceType": "Portal",
+      "sentiment": "NEUTRO",
+      "sentimentReason": "Cobertura factual e informativa sem viés explícito.",
+      "topics": [
+        "Eleições 2026",
+        "Gestão Pública"
+      ],
+      "rawSearchQuery": "\"Fábio Mitidieri\" Sergipe",
+      "collectedAt": "2026-08-25T18:59:31.404Z"
+    },
+    {
+      "id": "art-aHR0cHM6Ly9ob3JhbmV3cy5u",
+      "title": "Médico atualiza estado de saúde de Valmir e aponta suspeita de isquemia transitória",
+      "source": "Hora News SE",
+      "url": "https://horanews.net/medico-atualiza-estado-de-saude-de-valmir-e-aponta-suspeita-de-isquemia-transitoria/",
+      "date": "25/08/2026",
+      "time": "15:01",
+      "timestamp": 1787670067000,
+      "candidateName": "Fábio Mitidieri",
+      "candidateRole": "Governador",
+      "candidateParty": "PSD",
+      "snippet": "O candidato ao Governo de Sergipe, Valmir de Francisquinho, está estável e sem sintomas após apresentar um mal-estar no domingo (23). A informação foi divulgada nesta terça-feira (25) pelo médico Eduardo Amorim, candidato ao Senado Federal. Durante entrevista à imprensa, Amorim r...",
+      "municipality": "Localização não identificada",
+      "sourceType": "Blog",
+      "sentiment": "NEUTRO",
+      "sentimentReason": "Cobertura factual e informativa sem viés explícito.",
+      "topics": [
+        "Saúde Pública",
+        "Eleições 2026",
+        "Gestão Pública"
+      ],
+      "rawSearchQuery": "\"Fábio Mitidieri\" Sergipe",
+      "collectedAt": "2026-08-25T18:59:31.412Z"
+    },
+    {
+      "id": "art-aHR0cHM6Ly9qb3JuYWxkb2Rp",
+      "title": "Suspeito de assalto morre após confronto com a polícia em Itabaiana",
+      "source": "Jornal do Dia SE",
+      "url": "https://jornaldodiase.com.br/suspeito-de-assalto-morre-apos-confronto-com-a-policia-em-itabaiana/",
+      "date": "25/08/2026",
+      "time": "12:29",
+      "timestamp": 1787660952000,
+      "candidateName": "Valmir de Francisquinho",
+      "candidateRole": "Governador",
+      "candidateParty": "PL",
+      "snippet": "Um homem foi morto em confronto com a Polícia Civil no município de Itabaiana. Ele era suspeito de ter participado de um assalto no último domingo (23), em Campo do Brito. Dois homens em uma motocicleta abordaram um homem e uma mulher e praticaram o assalto. Segundo o delegado Fá...",
+      "municipality": "Itabaiana",
+      "sourceType": "Notícia",
+      "sentiment": "NEUTRO",
+      "sentimentReason": "Cobertura factual e informativa sem viés explícito.",
+      "topics": [
+        "Saúde Pública",
+        "Segurança",
+        "Agricultura"
+      ],
+      "rawSearchQuery": "\"Valmir de Francisquinho\" Sergipe",
+      "collectedAt": "2026-08-25T18:59:31.410Z"
+    }
+  ],
+  "googleTrends": [
+    {
+      "candidateName": "Fábio Mitidieri",
+      "role": "Governador",
+      "interestScore": 100,
+      "trendDirection": "up",
+      "searchQuery": "\"Fábio Mitidieri\" Sergipe",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    },
+    {
+      "candidateName": "Valmir de Francisquinho",
+      "role": "Governador",
+      "interestScore": 50,
+      "trendDirection": "stable",
+      "searchQuery": "\"Valmir de Francisquinho\" Sergipe",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    },
+    {
+      "candidateName": "Rogério Carvalho",
+      "role": "Senador",
+      "interestScore": 0,
+      "trendDirection": "down",
+      "searchQuery": "\"Rogério Carvalho\" Sergipe",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    },
+    {
+      "candidateName": "Alessandro Vieira",
+      "role": "Senador",
+      "interestScore": 0,
+      "trendDirection": "down",
+      "searchQuery": "\"Alessandro Vieira\" Sergipe",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    },
+    {
+      "candidateName": "André Moura",
+      "role": "Senador",
+      "interestScore": 0,
+      "trendDirection": "down",
+      "searchQuery": "\"André Moura\" Sergipe",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    },
+    {
+      "candidateName": "Yandra Moura",
+      "role": "Deputado Federal",
+      "interestScore": 50,
+      "trendDirection": "stable",
+      "searchQuery": "\"Yandra Moura\" Sergipe",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    },
+    {
+      "candidateName": "Emília Corrêa",
+      "role": "Prefeita / Liderança",
+      "interestScore": 100,
+      "trendDirection": "up",
+      "searchQuery": "\"Emília Corrêa\" Aracaju",
+      "period": "Últimos 30 dias",
+      "status": "disponivel",
+      "note": "Índice de interesse relativo na web (0-100) derivado de menções públicas. Não representa intenção de voto."
+    }
+  ],
+  "diagnosticLogs": [
+    {
+      "id": "diag-feed-1788705049568-im0o",
+      "timestamp": "2026-09-06T14:30:49.568Z",
+      "source": "Alese Notícias",
+      "endpointUrl": "https://al.se.leg.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.979Z",
+      "finishedAt": "2026-09-06T14:30:49.568Z",
+      "durationMs": 2585,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705049412-37n9",
+      "timestamp": "2026-09-06T14:30:49.412Z",
+      "source": "Destaque Notícias",
+      "endpointUrl": "https://destaquenoticias.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.978Z",
+      "finishedAt": "2026-09-06T14:30:49.412Z",
+      "durationMs": 2308,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705048505-wqaf",
+      "timestamp": "2026-09-06T14:30:48.505Z",
+      "source": "NE9 Nordeste",
+      "endpointUrl": "https://ne9.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.980Z",
+      "finishedAt": "2026-09-06T14:30:48.505Z",
+      "durationMs": 1414,
+      "httpStatus": 200,
+      "itemsFound": 12,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705048194-63zs",
+      "timestamp": "2026-09-06T14:30:48.194Z",
+      "source": "Agência Brasil Política",
+      "endpointUrl": "https://agenciabrasil.ebc.com.br/rss/politica/feed.xml",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.982Z",
+      "finishedAt": "2026-09-06T14:30:48.194Z",
+      "durationMs": 1194,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705048072-5lp6",
+      "timestamp": "2026-09-06T14:30:48.072Z",
+      "source": "Agência Brasil Geral",
+      "endpointUrl": "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.983Z",
+      "finishedAt": "2026-09-06T14:30:48.072Z",
+      "durationMs": 1077,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705048059-vfaj",
+      "timestamp": "2026-09-06T14:30:48.059Z",
+      "source": "Jornal do Dia SE",
+      "endpointUrl": "https://jornaldodiase.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.975Z",
+      "finishedAt": "2026-09-06T14:30:48.059Z",
+      "durationMs": 976,
+      "httpStatus": 200,
+      "itemsFound": 13,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705047964-thpi",
+      "timestamp": "2026-09-06T14:30:47.964Z",
+      "source": "Hora News SE",
+      "endpointUrl": "https://horanews.net/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.976Z",
+      "finishedAt": "2026-09-06T14:30:47.964Z",
+      "durationMs": 866,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705047948-3dzc",
+      "timestamp": "2026-09-06T14:30:47.948Z",
+      "source": "G1 Sergipe",
+      "endpointUrl": "https://g1.globo.com/rss/g1/se/sergipe/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.964Z",
+      "finishedAt": "2026-09-06T14:30:47.948Z",
+      "durationMs": 825,
+      "httpStatus": 200,
+      "itemsFound": 100,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705047822-fdlf",
+      "timestamp": "2026-09-06T14:30:47.822Z",
+      "source": "Infonet Sergipe",
+      "endpointUrl": "https://infonet.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.970Z",
+      "finishedAt": "2026-09-06T14:30:47.822Z",
+      "durationMs": 847,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1788705047727-mlt0",
+      "timestamp": "2026-09-06T14:30:47.728Z",
+      "source": "Fan F1 SE",
+      "endpointUrl": "https://fanf1.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-09-06T14:30:46.972Z",
+      "finishedAt": "2026-09-06T14:30:47.728Z",
+      "durationMs": 626,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684371400-dk6x",
+      "timestamp": "2026-08-25T18:59:31.400Z",
+      "source": "Destaque Notícias",
+      "endpointUrl": "https://destaquenoticias.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.935Z",
+      "finishedAt": "2026-08-25T18:59:31.400Z",
+      "durationMs": 1342,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370797-1jgx",
+      "timestamp": "2026-08-25T18:59:30.797Z",
+      "source": "NE9 Nordeste",
+      "endpointUrl": "https://ne9.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.938Z",
+      "finishedAt": "2026-08-25T18:59:30.797Z",
+      "durationMs": 676,
+      "httpStatus": 200,
+      "itemsFound": 12,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370743-hrti",
+      "timestamp": "2026-08-25T18:59:30.744Z",
+      "source": "Jornal do Dia SE",
+      "endpointUrl": "https://jornaldodiase.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.930Z",
+      "finishedAt": "2026-08-25T18:59:30.744Z",
+      "durationMs": 674,
+      "httpStatus": 200,
+      "itemsFound": 13,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370732-xso9",
+      "timestamp": "2026-08-25T18:59:30.732Z",
+      "source": "G1 Sergipe",
+      "endpointUrl": "https://g1.globo.com/rss/g1/se/sergipe/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.863Z",
+      "finishedAt": "2026-08-25T18:59:30.732Z",
+      "durationMs": 694,
+      "httpStatus": 200,
+      "itemsFound": 100,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370632-nuut",
+      "timestamp": "2026-08-25T18:59:30.632Z",
+      "source": "Infonet Sergipe",
+      "endpointUrl": "https://infonet.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.927Z",
+      "finishedAt": "2026-08-25T18:59:30.632Z",
+      "durationMs": 700,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370563-ny1i",
+      "timestamp": "2026-08-25T18:59:30.563Z",
+      "source": "Alese Notícias",
+      "endpointUrl": "https://al.se.leg.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.937Z",
+      "finishedAt": "2026-08-25T18:59:30.563Z",
+      "durationMs": 622,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370536-kh7f",
+      "timestamp": "2026-08-25T18:59:30.536Z",
+      "source": "Hora News SE",
+      "endpointUrl": "https://horanews.net/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.933Z",
+      "finishedAt": "2026-08-25T18:59:30.536Z",
+      "durationMs": 466,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370506-bu0o",
+      "timestamp": "2026-08-25T18:59:30.506Z",
+      "source": "Agência Brasil Política",
+      "endpointUrl": "https://agenciabrasil.ebc.com.br/rss/politica/feed.xml",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.940Z",
+      "finishedAt": "2026-08-25T18:59:30.506Z",
+      "durationMs": 555,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370427-p62a",
+      "timestamp": "2026-08-25T18:59:30.427Z",
+      "source": "Fan F1 SE",
+      "endpointUrl": "https://fanf1.com.br/feed/",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.929Z",
+      "finishedAt": "2026-08-25T18:59:30.427Z",
+      "durationMs": 361,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "diag-feed-1787684370246-iqn1",
+      "timestamp": "2026-08-25T18:59:30.247Z",
+      "source": "Agência Brasil Geral",
+      "endpointUrl": "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml",
+      "query": "FEED_AGGREGATION",
+      "startedAt": "2026-08-25T18:59:29.943Z",
+      "finishedAt": "2026-08-25T18:59:30.247Z",
+      "durationMs": 260,
+      "httpStatus": 200,
+      "itemsFound": 10,
+      "status": "DADOS ENCONTRADOS",
+      "classificationCode": "A",
+      "classificationLabel": "Feed RSS processado com sucesso"
+    },
+    {
+      "id": "log-1787683501887-sek1r",
+      "timestamp": "2026-08-25T18:45:01.887Z",
+      "source": "Google News RSS / Portais Públicos",
+      "query": "\"Fábio Mitidieri\" governador",
+      "startedAt": "2026-08-25T18:45:01.887Z",
+      "finishedAt": "2026-08-25T18:45:08.889Z",
+      "durationMs": 7002,
+      "httpStatus": null,
+      "itemsFound": 0,
+      "status": "TIMEOUT",
+      "errorMessage": "A fonte não respondeu dentro do tempo limite de 7s."
+    },
+    {
+      "id": "log-1787683494886-rjm6y",
+      "timestamp": "2026-08-25T18:44:54.886Z",
+      "source": "Google News RSS / Portais Públicos",
+      "query": "\"Fábio Mitidieri\" Sergipe",
+      "startedAt": "2026-08-25T18:44:54.886Z",
+      "finishedAt": "2026-08-25T18:45:01.887Z",
+      "durationMs": 7001,
+      "httpStatus": null,
+      "itemsFound": 0,
+      "status": "TIMEOUT",
+      "errorMessage": "A fonte não respondeu dentro do tempo limite de 7s."
+    },
+    {
+      "id": "log-1787683473884-eylns",
+      "timestamp": "2026-08-25T18:44:33.884Z",
+      "source": "Google News RSS / Portais Públicos",
+      "query": "\"Senador Alessandro Vieira\"",
+      "startedAt": "2026-08-25T18:44:33.884Z",
+      "finishedAt": "2026-08-25T18:44:40.885Z",
+      "durationMs": 7001,
+      "httpStatus": null,
+      "itemsFound": 0,
+      "status": "TIMEOUT",
+      "errorMessage": "A fonte não respondeu dentro do tempo limite de 7s."
+    },
+    {
+      "id": "log-1787683466878-yk5ng",
+      "timestamp": "2026-08-25T18:44:26.878Z",
+      "source": "Google News RSS / Portais Públicos",
+      "query": "\"Alessandro Vieira\" Sergipe",
+      "startedAt": "2026-08-25T18:44:26.878Z",
+      "finishedAt": "2026-08-25T18:44:33.883Z",
+      "durationMs": 7005,
+      "httpStatus": null,
+      "itemsFound": 0,
+      "status": "TIMEOUT",
+      "errorMessage": "A fonte não respondeu dentro do tempo limite de 7s."
+    },
+    {
+      "timestamp": "2026-08-25T18:35:50.444Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Prefeita Emília Corrêa\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:35:40.644Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Emília Corrêa\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:35:34.115Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Emília Corrêa\" Aracaju",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:35:25.111Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Deputada Yandra Moura\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:35:17.983Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Yandra Moura\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:35:10.046Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"André Luis Dantas Ferreira\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:35:03.658Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"André Moura\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:54.331Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Delegado Alessandro\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:47.261Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Senador Alessandro Vieira\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:38.901Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Alessandro Vieira\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:29.400Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Rogério Carvalho Santos\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:20.329Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Rogério Carvalho\" senador",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:13.774Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Rogério Carvalho\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:34:03.929Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Valmir dos Santos Costa\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:33:57.087Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Valmir de Francisquinho\" Itabaiana",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:33:47.538Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Valmir de Francisquinho\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:33:40.304Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Mitidieri\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:33:33.496Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Fábio Mitidieri\" governador",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:33:27.445Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Fábio Mitidieri\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:16:18.595Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Prefeita Emília Corrêa\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:16:09.979Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Emília Corrêa\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:16:00.425Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Emília Corrêa\" Aracaju",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:50.889Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Deputada Yandra Moura\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:41.667Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Yandra Moura\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:32.393Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"André Luis Dantas Ferreira\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:25.539Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"André Moura\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:16.345Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Delegado Alessandro\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:10.194Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Senador Alessandro Vieira\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:15:03.062Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Alessandro Vieira\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:56.059Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Rogério Carvalho Santos\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:47.678Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Rogério Carvalho\" senador",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:38.087Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Rogério Carvalho\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:31.285Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Valmir dos Santos Costa\"",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:23.703Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Valmir de Francisquinho\" Itabaiana",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:16.086Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Valmir de Francisquinho\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:09.209Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Mitidieri\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:14:00.924Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Fábio Mitidieri\" governador",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    },
+    {
+      "timestamp": "2026-08-25T18:13:53.049Z",
+      "action": "Coleta RSS Realizada",
+      "query": "\"Fábio Mitidieri\" Sergipe",
+      "itemsFound": 0,
+      "source": "Google News RSS / Portais Públicos"
+    }
+  ],
+  "candidateConfigs": [
+    {
+      "candidateName": "Fábio Mitidieri",
+      "role": "Governador",
+      "party": "PSD",
+      "searchTerms": [
+        "\"Fábio Mitidieri\" Sergipe",
+        "\"Fábio Mitidieri\" governador",
+        "\"Mitidieri\" Sergipe"
+      ],
+      "excludeTerms": [
+        "futebol",
+        "empresário"
+      ],
+      "active": true
+    },
+    {
+      "candidateName": "Valmir de Francisquinho",
+      "role": "Governador",
+      "party": "PL",
+      "searchTerms": [
+        "\"Valmir de Francisquinho\" Sergipe",
+        "\"Valmir de Francisquinho\" Itabaiana",
+        "\"Valmir dos Santos Costa\""
+      ],
+      "excludeTerms": [],
+      "active": true
+    },
+    {
+      "candidateName": "Rogério Carvalho",
+      "role": "Senador",
+      "party": "PT",
+      "searchTerms": [
+        "\"Rogério Carvalho\" Sergipe",
+        "\"Rogério Carvalho\" senador",
+        "\"Rogério Carvalho Santos\""
+      ],
+      "excludeTerms": [],
+      "active": true
+    },
+    {
+      "candidateName": "Alessandro Vieira",
+      "role": "Senador",
+      "party": "MDB",
+      "searchTerms": [
+        "\"Alessandro Vieira\" Sergipe",
+        "\"Senador Alessandro Vieira\"",
+        "\"Delegado Alessandro\""
+      ],
+      "excludeTerms": [],
+      "active": true
+    },
+    {
+      "candidateName": "André Moura",
+      "role": "Senador",
+      "party": "União Brasil",
+      "searchTerms": [
+        "\"André Moura\" Sergipe",
+        "\"André Luis Dantas Ferreira\""
+      ],
+      "excludeTerms": [],
+      "active": true
+    },
+    {
+      "candidateName": "Yandra Moura",
+      "role": "Deputado Federal",
+      "party": "União Brasil",
+      "searchTerms": [
+        "\"Yandra Moura\" Sergipe",
+        "\"Deputada Yandra Moura\""
+      ],
+      "excludeTerms": [],
+      "active": true
+    },
+    {
+      "candidateName": "Emília Corrêa",
+      "role": "Prefeita / Liderança",
+      "party": "PL",
+      "searchTerms": [
+        "\"Emília Corrêa\" Aracaju",
+        "\"Emília Corrêa\" Sergipe",
+        "\"Prefeita Emília Corrêa\""
+      ],
+      "excludeTerms": [],
+      "active": true
+    }
+  ]
+}

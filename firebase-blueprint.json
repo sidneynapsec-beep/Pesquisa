@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "Poll": {
+      "title": "Poll",
+      "description": "Electoral survey or tracking data with statistical indicators and voter intent",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the poll" },
+        "institute": { "type": "string", "description": "Name of the research institute" },
+        "registryNumber": { "type": "string", "description": "TSE registration code or blank" },
+        "conre": { "type": "string", "description": "CONRE registration number" },
+        "statistician": { "type": "string", "description": "Responsible statistician" },
+        "sampleSize": { "type": "number", "description": "Sample size (n)" },
+        "marginOfError": { "type": "number", "description": "Margin of error in percentage" },
+        "confidenceLevel": { "type": "number", "description": "Confidence level percentage" },
+        "fieldworkStart": { "type": "string", "description": "Start date of data collection" },
+        "fieldworkEnd": { "type": "string", "description": "End date of data collection" },
+        "medianDate": { "type": "string", "description": "Median date of fieldwork" },
+        "type": { "type": "string", "description": "Type of poll: Registrada or Tracking" },
+        "results": { "type": "object", "description": "Candidate percentage results" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Update timestamp" }
+      },
+      "required": ["institute", "conre", "statistician", "sampleSize", "marginOfError", "confidenceLevel", "results"]
+    },
+    "AccessRequest": {
+      "title": "AccessRequest",
+      "description": "User access authorization request requiring administrator approval",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier (email hash or user id)" },
+        "email": { "type": "string", "description": "User email address requesting access" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "organization": { "type": "string", "description": "Organization or political party" },
+        "status": { "type": "string", "description": "Approval status: pending, approved, rejected", "enum": ["pending", "approved", "rejected"] },
+        "grantedRole": { "type": "string", "description": "Granted role: Viewer or Administrator", "enum": ["Viewer", "Administrator"] },
+        "requestedAt": { "type": "string", "description": "Timestamp when access was requested" },
+        "approvedAt": { "type": "string", "description": "Timestamp when access was approved or rejected" },
+        "approvedBy": { "type": "string", "description": "Administrator who granted the permission" },
+        "notes": { "type": "string", "description": "Additional notes or justification" }
+      },
+      "required": ["email", "name", "status", "requestedAt"]
+    }
+  },
+  "firestore": {
+    "/polls/{pollId}": {
+      "schema": "Poll",
+      "description": "Permanent store of electoral research and trackings"
+    },
+    "/access_requests/{requestId}": {
+      "schema": "AccessRequest",
+      "description": "Store of user access requests and approvals managed by the system administrator"
+    }
+  }
+}

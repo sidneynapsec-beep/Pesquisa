@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-09-06T13:13:03.945Z",
+  "backupDir": "data/backups/snapshot_pre_refactor_20260906131303.",
+  "files": {
+    "persistent_polls.json": {
+      "relativePath": "data/persistent_polls.json",
+      "sizeBytes": 26084562,
+      "sha256": "aaffe006184b0f9490e5366b20eb980880a820f34a7114b0dce81ae3f51972c1",
+      "recordCount": 5,
+      "isArray": true
+    },
+    "persistent_datasets.json": {
+      "relativePath": "data/persistent_datasets.json",
+      "sizeBytes": 6287708,
+      "sha256": "a367257faa1c51555926c8c84144f0d93b4ab23ffae7c563f9abad4772cbb03a",
+      "recordCount": 5,
+      "isArray": true
+    },
+    "persistent_digital_radar.json": {
+      "relativePath": "data/persistent_digital_radar.json",
+      "sizeBytes": 26051,
+      "sha256": "e169c07f2541a11c1ddb33f8b156a0ccf3ce411bb97c9257fdbc976f45bf1368",
+      "recordCount": 9,
+      "isArray": false
+    },
+    "backup_polls.json": {
+      "relativePath": "data/backup_polls.json",
+      "sizeBytes": 26084562,
+      "sha256": "aaffe006184b0f9490e5366b20eb980880a820f34a7114b0dce81ae3f51972c1",
+      "recordCount": 5,
+      "isArray": true
+    },
+    "backup_datasets.json": {
+      "relativePath": "data/backup_datasets.json",
+      "sizeBytes": 6287708,
+      "sha256": "a367257faa1c51555926c8c84144f0d93b4ab23ffae7c563f9abad4772cbb03a",
+      "recordCount": 5,
+      "isArray": true
+    }
+  }
+}

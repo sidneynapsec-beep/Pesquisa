@@ -1,0 +1,14 @@
+[
+  {
+    "id": "admin-sidneynapsec",
+    "email": "sidneynapsec@gmail.com",
+    "name": "Sidney",
+    "organization": "CTAS Consultoria - Sergipe",
+    "status": "approved",
+    "grantedRole": "Administrator",
+    "requestedAt": "2026-01-01T00:00:00.000Z",
+    "approvedAt": "2026-01-01T00:00:00.000Z",
+    "approvedBy": "Sistema SEIE",
+    "notes": "Administrador Central e Proprietário Oficial do Sistema"
+  }
+]

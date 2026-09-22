@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == 'Administrator' ||
+        request.auth.token.email == 'sidneynapsec@gmail.com'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidPoll(data) {
+      return data.institute is string && data.institute.size() <= 200 &&
+             data.statistician is string && data.statistician.size() <= 200 &&
+             data.conre is string && data.conre.size() <= 50 &&
+             data.sampleSize is number && data.sampleSize >= 0 &&
+             data.marginOfError is number && data.marginOfError >= 0 &&
+             data.confidenceLevel is number && data.confidenceLevel >= 0 &&
+             data.results is map;
+    }
+
+    // Polls collection: readable by authenticated users (or public read for registered reports),
+    // strictly writable ONLY by validated Administrators
+    match /polls/{pollId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(pollId) && isValidPoll(incoming());
+      allow update: if isAdmin() && isValidId(pollId) && isValidPoll(incoming());
+      allow delete: if isAdmin() && isValidId(pollId);
+    }
+
+    // Access requests collection:
+    // Anyone can create an access request in 'pending' status
+    // Users can read their own request status; Administrators can list, approve, and manage all requests
+    match /access_requests/{requestId} {
+      allow get: if isAuthenticated() && (
+        isAdmin() ||
+        (resource.data.email == request.auth.token.email)
+      );
+      allow list: if isAdmin();
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          incoming().email == request.auth.token.email &&
+          incoming().status == 'pending' &&
+          incoming().name is string && incoming().name.size() <= 200
+        )
+      );
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}
+

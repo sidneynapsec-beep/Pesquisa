@@ -1,0 +1,6 @@
+{
+  "name": "Sistema Especialista em Inteligência Eleitoral (SEIE)",
+  "description": "Sistema de inteligência eleitoral com análises estatísticas, cartografia de Sergipe e inteligência artificial baseada no RAG e diretrizes do TSE.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

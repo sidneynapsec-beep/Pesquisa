@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-09-06T06:44:00Z",
+  "files": [
+    {
+      "path": "data/backup_datasets.json",
+      "size": 6287708,
+      "sha256": "a367257faa1c51555926c8c84144f0d93b4ab23ffae7c563f9abad4772cbb03a"
+    },
+    {
+      "path": "data/backup_polls.json",
+      "size": 26084562,
+      "sha256": "aaffe006184b0f9490e5366b20eb980880a820f34a7114b0dce81ae3f51972c1"
+    },
+    {
+      "path": "data/persistent_datasets.json",
+      "size": 6287708,
+      "sha256": "a367257faa1c51555926c8c84144f0d93b4ab23ffae7c563f9abad4772cbb03a"
+    },
+    {
+      "path": "data/persistent_digital_radar.json",
+      "size": 26051,
+      "sha256": "e169c07f2541a11c1ddb33f8b156a0ccf3ce411bb97c9257fdbc976f45bf1368"
+    },
+    {
+      "path": "data/persistent_polls.json",
+      "size": 26084562,
+      "sha256": "aaffe006184b0f9490e5366b20eb980880a820f34a7114b0dce81ae3f51972c1"
+    },
+    {
+      "path": "data/pre_migration_inventory.json",
+      "size": 1384,
+      "sha256": "b94c1936c08c867c0f85f13e38641d4a37bc64324b40bd627fb24c0b906e64e1"
+    }
+  ],
+  "totalFiles": 6,
+  "totalSize": 64771975,
+  "sha256": {
+    "data/backup_datasets.json": "a367257faa1c51555926c8c84144f0d93b4ab23ffae7c563f9abad4772cbb03a",
+    "data/backup_polls.json": "aaffe006184b0f9490e5366b20eb980880a820f34a7114b0dce81ae3f51972c1",
+    "data/persistent_datasets.json": "a367257faa1c51555926c8c84144f0d93b4ab23ffae7c563f9abad4772cbb03a",
+    "data/persistent_digital_radar.json": "e169c07f2541a11c1ddb33f8b156a0ccf3ce411bb97c9257fdbc976f45bf1368",
+    "data/persistent_polls.json": "aaffe006184b0f9490e5366b20eb980880a820f34a7114b0dce81ae3f51972c1",
+    "data/pre_migration_inventory.json": "b94c1936c08c867c0f85f13e38641d4a37bc64324b40bd627fb24c0b906e64e1"
+  },
+  "pollCount": 5,
+  "datasetCount": 5,
+  "recordCounts": {
+    "polls": 5,
+    "datasets": 5
+  }
+}
