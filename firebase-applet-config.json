@@ -6,5 +6,7 @@
   "firestoreDatabaseId": "ai-studio-sistemaespeciali-3ba35e88-0952-4321-9a07-fe9d45d0a9f0",
   "storageBucket": "eminent-xray-hgtt6.firebasestorage.app",
   "messagingSenderId": "992863640841",
-  "measurementId": ""
+  "measurementId": "",
+  "oAuthClientId": "992863640841-uc3j2p78qn722rr2t0u6uvonoeusnf7t.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }
