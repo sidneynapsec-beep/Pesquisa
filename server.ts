@@ -1850,3 +1850,4 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 export { app, authenticateUser, requireAdmin };
+export default app;
