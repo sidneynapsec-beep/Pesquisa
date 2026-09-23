@@ -4,7 +4,7 @@ import { isValidPoll } from "../utils/pollValidation";
 import { PRE_CANDIDATES } from "../data/sergipeData";
 import { useElectoralData } from "../context/ElectoralDataContext";
 import { formatDateBR, formatDateRangeBR } from "../utils/dateFormatter";
-import { parseFlexibleDate, computeMedianDate, extractFieldworkPeriodFromRows } from "../utils/fileParser";
+import { parseFlexibleDate, computeMedianDate, extractFieldworkPeriodFromRows, processSurveyMicrodata } from "../utils/fileParser";
 import {
   calculateAuditedMarginOfError,
   validateSenateMentionsSum,
@@ -326,6 +326,39 @@ export default function DiagnosticoPesquisas({
         parseFlexibleDate(poll.medianDate) ||
         resolvedStart;
 
+      const resultsSum = Object.values(poll.results || {}).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0);
+      let calculatedResults = poll.results;
+      let calculatedRoleResults = poll.roleResults;
+      let calculatedRoleValidResults = poll.roleValidResults;
+      let calculatedRoleRawCounts = poll.roleRawCounts;
+      let calculatedRoleStats = poll.roleStats;
+      let calculatedTerritorial = poll.territorialBreakdown;
+      let calculatedTerritorialRole = poll.territorialRoleBreakdown;
+      let calculatedSample = poll.sampleSize;
+      let calculatedMargin = poll.marginOfError;
+
+      if ((resultsSum === 0 || Object.keys(poll.results || {}).length === 0) && Array.isArray(baseRows) && baseRows.length > 0) {
+        try {
+          const parsed = processSurveyMicrodata(baseRows, poll.fileName || poll.id);
+          if (Object.keys(parsed.results || {}).length > 0) {
+            calculatedResults = parsed.results;
+            calculatedRoleResults = parsed.roleResults;
+            calculatedRoleValidResults = parsed.roleValidResults;
+            calculatedRoleRawCounts = parsed.roleRawCounts;
+            calculatedRoleStats = parsed.roleStats;
+            calculatedTerritorial = parsed.territorialBreakdown;
+            calculatedTerritorialRole = parsed.territorialRoleBreakdown;
+            calculatedSample = parsed.sampleSize;
+            calculatedMargin = parsed.marginOfError;
+            if (parsed.fieldworkStart && !resolvedStart) resolvedStart = parsed.fieldworkStart;
+            if (parsed.fieldworkEnd && !resolvedEnd) resolvedEnd = parsed.fieldworkEnd;
+            if (parsed.medianDate && !median) median = parsed.medianDate;
+          }
+        } catch (parseErr) {
+          console.warn("[Diagnostico] Falha ao processar microdados para autocorreção:", parseErr);
+        }
+      }
+
       const updatedPayload: Partial<Poll> = {
         fieldworkStart: resolvedStart || poll.fieldworkStart,
         fieldworkEnd: resolvedEnd || poll.fieldworkEnd,
@@ -333,12 +366,19 @@ export default function DiagnosticoPesquisas({
         conre: poll.conre || "10801",
         statistician: poll.statistician || "Sidney Barreto Batista",
         institute: poll.institute || "CTAS",
-        sampleSize: poll.sampleSize || 1000,
-        marginOfError: poll.marginOfError || 3.0,
+        sampleSize: calculatedSample || 1000,
+        marginOfError: calculatedMargin || 3.0,
         confidenceLevel: poll.confidenceLevel || 95,
+        results: calculatedResults,
+        roleResults: calculatedRoleResults,
+        roleValidResults: calculatedRoleValidResults,
+        roleRawCounts: calculatedRoleRawCounts,
+        roleStats: calculatedRoleStats,
+        territorialBreakdown: calculatedTerritorial,
+        territorialRoleBreakdown: calculatedTerritorialRole,
         version: nextVersion,
         parentId: poll.id,
-        justificativa: "Auditoria estatística e reconciliação assistida de metadados sem alteração de intenções nominais"
+        justificativa: "Auditoria estatística e reconciliação assistida de metadados e microdados"
       };
 
       if (onUpdatePoll) {

@@ -28,6 +28,14 @@ export interface LoginResult {
   notFound?: boolean;
 }
 
+export interface RequestAccessResult {
+  success?: boolean;
+  status: string;
+  message: string;
+  code?: string;
+  error?: string;
+}
+
 export interface AuthContextType {
   status: AuthStatus;
   user: AppUser | null;
@@ -38,8 +46,8 @@ export interface AuthContextType {
   handleUnauthorized: () => void;
   login: (email: string, password: string) => Promise<LoginResult>;
   loginAsAdmin: (email?: string, password?: string) => Promise<LoginResult>;
-  checkAccessStatus: (email: string) => Promise<{ status: string; role?: UserRole; name?: string }>;
-  requestAccess: (data: { email: string; name: string; password?: string; organization?: string; notes?: string }) => Promise<{ status: string; message: string; code?: string }>;
+  checkAccessStatus: (email: string) => Promise<{ status: string; role?: UserRole; name?: string; error?: string }>;
+  requestAccess: (data: { email: string; name: string; password?: string; organization?: string; notes?: string }) => Promise<RequestAccessResult>;
   refreshSession: () => Promise<void>;
 }
 
@@ -54,11 +62,86 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({ success: false }),
   loginAsAdmin: async () => ({ success: false }),
   checkAccessStatus: async () => ({ status: "error" }),
-  requestAccess: async () => ({ status: "error", message: "" }),
+  requestAccess: async () => ({ success: false, status: "error", message: "" }),
   refreshSession: async () => {}
 });
 
 export const useAuth = () => useContext(AuthContext);
+
+/**
+ * Utilitário de requisição segura para APIs de autenticação.
+ * Valida response.ok e o Content-Type antes de chamar response.json(),
+ * prevenindo erros de "Unexpected token 'A', 'A server e'... is not valid JSON".
+ * Mantém o diagnóstico técnico completo no console sem expor segredos na UI.
+ */
+interface SafeFetchResult<T = any> {
+  ok: boolean;
+  status: number;
+  data: T | null;
+  error?: string;
+  rawText?: string;
+}
+
+async function safeFetchJson<T = any>(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<SafeFetchResult<T>> {
+  try {
+    const res = await fetch(input, init);
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    const isJson = contentType.includes("application/json");
+
+    if (isJson) {
+      try {
+        const json = await res.json();
+        return {
+          ok: res.ok,
+          status: res.status,
+          data: json,
+          error: res.ok ? undefined : (json?.error || json?.message || `Erro do servidor (${res.status})`)
+        };
+      } catch (parseErr: any) {
+        console.error("[SEIE Auth] Falha ao processar payload JSON do servidor:", parseErr);
+        return {
+          ok: false,
+          status: res.status,
+          data: null,
+          error: "O servidor enviou uma resposta fora do padrão esperado. Tente novamente em instantes."
+        };
+      }
+    }
+
+    // O servidor retornou texto puro ou HTML (ex.: erro 500 do Node/Vercel)
+    const rawText = await res.text().catch(() => "");
+    console.error(
+      `[SEIE Auth] Resposta não-JSON retornada pelo servidor (Status ${res.status} ${res.statusText}):`,
+      rawText.slice(0, 500)
+    );
+
+    let friendlyMessage = "Não foi possível concluir a operação. O serviço está temporariamente indisponível.";
+    if (res.status === 404) {
+      friendlyMessage = "Serviço de autenticação não localizado no servidor.";
+    } else if (res.status >= 500) {
+      friendlyMessage = "Instabilidade temporária no servidor ao processar o cadastro. Tente novamente em alguns instantes.";
+    }
+
+    return {
+      ok: false,
+      status: res.status,
+      data: null,
+      error: friendlyMessage,
+      rawText
+    };
+  } catch (networkErr: any) {
+    console.error("[SEIE Auth] Erro de rede na requisição de autenticação:", networkErr);
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+      error: "Falha de conexão com o servidor. Verifique sua conexão com a internet."
+    };
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("INITIALIZING");
@@ -67,13 +150,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [pendingInfo, setPendingInfo] = useState<PendingAccessInfo | null>(null);
 
   const checkAccessStatus = useCallback(async (email: string) => {
-    try {
-      const res = await fetch(`/api/auth/check-access?email=${encodeURIComponent(email.trim().toLowerCase())}`);
-      const data = await res.json();
-      return data;
-    } catch {
-      return { status: "error" };
+    const cleanEmail = (email || "").trim().toLowerCase();
+    const result = await safeFetchJson(`/api/auth/check-access?email=${encodeURIComponent(cleanEmail)}`);
+    if (result.ok && result.data) {
+      return result.data;
     }
+    return { status: "error", error: result.error };
   }, []);
 
   const login = useCallback(async (targetEmail: string, password?: string): Promise<LoginResult> => {
@@ -83,55 +165,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cleanEmail = (targetEmail || "").trim().toLowerCase();
     const cleanPassword = String(password || "").trim();
 
-    try {
-      const res = await fetch("/api/auth/admin-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
-      });
-      const data = await res.json();
+    const result = await safeFetchJson<any>("/api/auth/admin-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
+    });
 
-      if (res.ok && data.status === "success" && data.token) {
-        localStorage.setItem("seie_admin_token", data.token);
-        localStorage.setItem("seie_admin_user", JSON.stringify(data.user));
-        setUser(data.user);
-        const resolvedRole: UserRole = data.user.role || (cleanEmail === "sidneynapsec@gmail.com" ? "Administrator" : "Viewer");
-        setRole(resolvedRole);
-        setStatus("AUTHENTICATED");
-        setPendingInfo(null);
-        return { success: true };
-      }
+    if (result.ok && result.data && (result.data.status === "success" || result.data.success) && result.data.token) {
+      const data = result.data;
+      localStorage.setItem("seie_admin_token", data.token);
+      localStorage.setItem("seie_admin_user", JSON.stringify(data.user));
+      setUser(data.user);
+      const resolvedRole: UserRole = data.user?.role || (cleanEmail === "sidneynapsec@gmail.com" ? "Administrator" : "Viewer");
+      setRole(resolvedRole);
+      setStatus("AUTHENTICATED");
+      setPendingInfo(null);
+      return { success: true };
+    }
 
-      if (data.code === "USER_NOT_FOUND" || res.status === 404) {
-        return {
-          success: false,
-          notFound: true,
-          code: "USER_NOT_FOUND",
-          error: "Usuário não encontrado. Deseja solicitar acesso?"
-        };
-      }
-
-      if (data.code === "ACCESS_PENDING_APPROVAL" || data.accessStatus === "pending") {
-        setPendingInfo({ email: cleanEmail, name: cleanEmail.split("@")[0] });
-        return {
-          success: false,
-          isPending: true,
-          code: "ACCESS_PENDING_APPROVAL",
-          error: data.message || "Seu acesso ainda está em análise pelo administrador."
-        };
-      }
-
+    const data = result.data;
+    if (data?.code === "USER_NOT_FOUND" || result.status === 404) {
       return {
         success: false,
-        code: data.code || "INVALID_CREDENTIALS",
-        error: data.message || "E-mail ou senha incorretos."
-      };
-    } catch (err: any) {
-      return {
-        success: false,
-        error: err?.message || "Falha na conexão com o servidor de autenticação."
+        notFound: true,
+        code: "USER_NOT_FOUND",
+        error: "Usuário não encontrado. Deseja solicitar acesso?"
       };
     }
+
+    if (data?.code === "ACCESS_PENDING_APPROVAL" || data?.accessStatus === "pending") {
+      setPendingInfo({ email: cleanEmail, name: cleanEmail.split("@")[0] });
+      return {
+        success: false,
+        isPending: true,
+        code: "ACCESS_PENDING_APPROVAL",
+        error: data.message || "Seu acesso ainda está em análise pelo administrador."
+      };
+    }
+
+    return {
+      success: false,
+      code: data?.code || "INVALID_CREDENTIALS",
+      error: data?.error || data?.message || result.error || "E-mail ou senha incorretos."
+    };
   }, []);
 
   // Backward compatibility alias for any existing caller
@@ -140,31 +216,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const requestAccess = useCallback(
-    async (info: { email: string; name: string; password?: string; organization?: string; notes?: string }) => {
-      try {
-        const res = await fetch("/api/auth/request-access", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(info)
-        });
-        const data = await res.json();
-        if (data.status === "approved") {
-          return { status: "approved", message: data.message };
-        }
-        if (data.status === "pending") {
+    async (info: { email: string; name: string; password?: string; organization?: string; notes?: string }): Promise<RequestAccessResult> => {
+      // Limpeza de campos antes de submeter
+      const payload = {
+        name: (info.name || "").trim(),
+        email: (info.email || "").trim().toLowerCase(),
+        password: String(info.password || "").trim(),
+        organization: (info.organization || "").trim(),
+        notes: (info.notes || "").trim()
+      };
+
+      const result = await safeFetchJson<{
+        success?: boolean;
+        status?: string;
+        message?: string;
+        error?: string;
+        code?: string;
+        role?: string;
+      }>("/api/auth/request-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (result.ok && result.data) {
+        const data = result.data;
+        if (data.status === "approved" || data.role === "Administrator") {
           return {
-            status: "pending",
-            message: data.message || "Solicitação enviada com sucesso! Aguarde a liberação do administrador."
+            success: true,
+            status: "approved",
+            message: data.message || "Acesso aprovado com sucesso!"
           };
         }
         return {
-          status: data.status || "error",
-          code: data.code,
-          message: data.message || "Erro ao processar solicitação."
+          success: true,
+          status: "pending",
+          message: data.message || "Cadastro realizado com sucesso! Aguarde a liberação do administrador."
         };
-      } catch (err: any) {
-        return { status: "error", message: err?.message || "Erro de conexão com o servidor." };
       }
+
+      // Em caso de erro
+      const data = result.data;
+      const errorMessage = data?.error || data?.message || result.error || "Erro ao processar solicitação de cadastro.";
+      return {
+        success: false,
+        status: "error",
+        code: data?.code,
+        error: errorMessage,
+        message: errorMessage
+      };
     },
     []
   );
@@ -172,27 +272,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = useCallback(async () => {
     const savedToken = localStorage.getItem("seie_admin_token");
     if (!savedToken) return;
-    try {
-      const res = await fetch("/api/auth/session", {
-        headers: { Authorization: `Bearer ${savedToken}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status === "authenticated") {
-          setUser(data.user);
-          setRole(data.user.role || "Viewer");
-          setStatus("AUTHENTICATED");
-          setPendingInfo(null);
-          return;
-        }
-      } else if (res.status === 403) {
-        const data = await res.json().catch(() => ({}));
-        if (data.accessStatus === "pending") {
-          setStatus("PENDING_APPROVAL");
-        }
+
+    const result = await safeFetchJson<any>("/api/auth/session", {
+      headers: { Authorization: `Bearer ${savedToken}` }
+    });
+
+    if (result.ok && result.data && (result.data.status === "authenticated" || result.data.success)) {
+      const data = result.data;
+      setUser(data.user);
+      setRole(data.user?.role || "Viewer");
+      setStatus("AUTHENTICATED");
+      setPendingInfo(null);
+      return;
+    } else if (result.status === 403) {
+      if (result.data?.accessStatus === "pending") {
+        setStatus("PENDING_APPROVAL");
       }
-    } catch (err) {
-      console.warn("[AuthContext] Falha ao renovar sessão:", err);
     }
   }, []);
 
@@ -221,22 +316,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const savedUser = localStorage.getItem("seie_admin_user");
 
         if (savedToken) {
-          const res = await fetch("/api/auth/session", {
+          const result = await safeFetchJson<any>("/api/auth/session", {
             headers: { Authorization: `Bearer ${savedToken}` }
           });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.status === "authenticated" && isMounted) {
-              const parsed = savedUser ? JSON.parse(savedUser) : null;
-              setUser(data.user || parsed);
-              setRole(data.user?.role || "Viewer");
-              setStatus("AUTHENTICATED");
-              setPendingInfo(null);
-              return;
-            }
-          } else if (res.status === 403) {
-            const data = await res.json().catch(() => ({}));
-            if (data.accessStatus === "pending" && isMounted) {
+          if (result.ok && result.data && (result.data.status === "authenticated" || result.data.success) && isMounted) {
+            const data = result.data;
+            const parsed = savedUser ? JSON.parse(savedUser) : null;
+            setUser(data.user || parsed);
+            setRole(data.user?.role || "Viewer");
+            setStatus("AUTHENTICATED");
+            setPendingInfo(null);
+            return;
+          } else if (result.status === 403 && isMounted) {
+            if (result.data?.accessStatus === "pending") {
               const parsed = savedUser ? JSON.parse(savedUser) : null;
               setPendingInfo({ email: parsed?.email || "usuario" });
               setStatus("PENDING_APPROVAL");

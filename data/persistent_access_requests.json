@@ -1,5 +1,85 @@
 [
   {
+    "id": "req-1790188944894-j0xt",
+    "email": "novo.rewrite.1790188944890@seie.gov.br",
+    "name": "Maria Santos",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:42:24.894Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188944885-3i9z",
+    "email": "novo.usuario.1790188944879@instituto.se.gov.br",
+    "name": "Pesquisador João Silva",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "Instituto de Pesquisa",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:42:24.885Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188932721-2jp3",
+    "email": "novo.rewrite.1790188932718@seie.gov.br",
+    "name": "Maria Santos",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:42:12.721Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188932716-dgq8",
+    "email": "novo.usuario.1790188932683@instituto.se.gov.br",
+    "name": "Pesquisador João Silva",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "Instituto de Pesquisa",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:42:12.716Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188918989-jht5",
+    "email": "novo.rewrite.1790188918985@seie.gov.br",
+    "name": "Maria Santos",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:41:58.989Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188918982-7p8y",
+    "email": "novo.usuario.1790188918970@instituto.se.gov.br",
+    "name": "Pesquisador João Silva",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "Instituto de Pesquisa",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:41:58.982Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188910932-bedc",
+    "email": "novo.rewrite.1790188910928@seie.gov.br",
+    "name": "Maria Santos",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:41:50.932Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790188910924-gb97",
+    "email": "novo.usuario.1790188910910@instituto.se.gov.br",
+    "name": "Pesquisador João Silva",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "Instituto de Pesquisa",
+    "status": "pending",
+    "requestedAt": "2026-09-23T18:41:50.924Z",
+    "notes": ""
+  },
+  {
     "id": "admin-sidneynapsec",
     "email": "sidneynapsec@gmail.com",
     "name": "Sidney",

@@ -134,13 +134,13 @@ export default function AuthScreen() {
         password: pass
       });
 
-      if (res.status === "pending" || res.status === "approved") {
-        setRequestSuccess("Solicitação enviada com sucesso! Aguarde a liberação do administrador.");
+      if (res.status === "pending" || res.status === "approved" || res.success) {
+        setRequestSuccess(res.message || "Cadastro realizado com sucesso! Aguarde a liberação do administrador.");
         // Clear fields
         setReqPassword("");
         setReqConfirmPassword("");
       } else {
-        setRequestError(res.message || "Não foi possível registrar a solicitação.");
+        setRequestError(res.error || res.message || "Não foi possível registrar a solicitação.");
       }
     } catch {
       setRequestError("Erro ao comunicar com o servidor. Tente novamente.");

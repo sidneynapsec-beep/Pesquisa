@@ -11,17 +11,17 @@ const archiver: any = (archiverModule as any).default || archiverModule;
 import admin from "firebase-admin";
 import { DigitalRadarManager } from "../server/digitalRadar";
 import { getCanonicalTerritoriesData, CANONICAL_SERGIPE_TERRITORIES } from "../src/data/canonicalTerritories";
+import { processSurveyMicrodata } from "../src/utils/fileParser";
 
 dotenv.config();
 
-// Proteção estrita contra bypass em produção
+// Proteção estrita contra bypass em produção: encerra imediatamente com erro (Fail Closed)
 if (
   process.env.NODE_ENV === "production" &&
   process.env.ALLOW_DEV_AUTH_BYPASS === "true"
 ) {
-  throw new Error(
-    "ALLOW_DEV_AUTH_BYPASS não pode ser habilitado em produção."
-  );
+  console.error("[Segurança] CRÍTICO: ALLOW_DEV_AUTH_BYPASS não pode ser habilitado em produção!");
+  process.exit(1);
 }
 
 const getDirname = () => {
@@ -37,18 +37,80 @@ const getDirname = () => {
 const __dirname = getDirname();
 
 const app = express();
-// Increased payload limits for processing structured survey datasets
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// 1. Compatibilidade com rewrites do Vercel Serverless (preserva a rota original da requisição)
+app.use((req, res, next) => {
+  const originalPath = (req.headers["x-matched-path"] as string) || (req.headers["x-now-route-matches"] as string);
+  if (req.url === "/api/index" && originalPath && originalPath !== "/api/index") {
+    req.url = originalPath;
+  }
+  next();
+});
+
+// 2. Headers CORS e suporte a preflight (OPTIONS)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-auth-role, x-admin-secret");
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  next();
+});
+
+// 3. Body parsers seguros contra timeout em Serverless Functions (onde req.body já pode vir pré-parseado pelo runtime Vercel)
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === "object") {
+    return next();
+  }
+  express.json({ limit: "50mb" })(req, res, next);
+});
+
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === "object") {
+    return next();
+  }
+  express.urlencoded({ extended: true, limit: "50mb" })(req, res, next);
+});
 
 const PORT = 3000;
 
-// Persistent Data Storage Paths
-const DATA_DIR = path.join(process.cwd(), "data");
+// Persistent Data Storage Paths (com suporte ao diretório /tmp gravável da Vercel / Serverless)
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
+const BASE_DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = isServerless ? path.join("/tmp", "seie-data") : BASE_DATA_DIR;
 const POLLS_FILE = path.join(DATA_DIR, "persistent_polls.json");
 const DATASETS_FILE = path.join(DATA_DIR, "persistent_datasets.json");
 const ACCESS_REQUESTS_FILE = path.join(DATA_DIR, "persistent_access_requests.json");
 const ADMIN_CREDENTIALS_FILE = path.join(DATA_DIR, "persistent_admin_credentials.json");
+
+// Inicialização segura do diretório de dados e cópia de sementes iniciais se em ambiente serverless
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (isServerless && fs.existsSync(BASE_DATA_DIR)) {
+    const seedFiles = [
+      "persistent_polls.json",
+      "persistent_datasets.json",
+      "persistent_access_requests.json",
+      "persistent_admin_credentials.json"
+    ];
+    for (const file of seedFiles) {
+      const src = path.join(BASE_DATA_DIR, file);
+      const dest = path.join(DATA_DIR, file);
+      if (fs.existsSync(src) && !fs.existsSync(dest)) {
+        try {
+          fs.copyFileSync(src, dest);
+        } catch (copyErr) {
+          console.warn(`[Storage] Aviso ao copiar semente ${file}:`, copyErr);
+        }
+      }
+    }
+  }
+} catch (e) {
+  console.warn("[Storage] Aviso na inicialização do diretório de dados:", e);
+}
 
 function getAdminPassword(): string {
   try {
@@ -142,26 +204,57 @@ function convertDatasetToPoll(ds: any): any {
   const fStart = ds.fieldworkStart && ds.fieldworkStart !== "1970-01-01" ? ds.fieldworkStart : (ds.medianDate || ds.fieldworkEnd || "");
   const fEnd = ds.fieldworkEnd && ds.fieldworkEnd !== "1970-01-01" ? ds.fieldworkEnd : (ds.medianDate || fStart || "");
   const fMedian = ds.medianDate && ds.medianDate !== "1970-01-01" ? ds.medianDate : fStart || "";
+
+  let results = ds.results || {};
+  let roleResults = ds.roleResults || {};
+  let roleValidResults = ds.roleValidResults || {};
+  let roleRawCounts = ds.roleRawCounts || {};
+  let roleStats = ds.roleStats || {};
+  let territorialBreakdown = ds.territorialBreakdown || {};
+  let territorialRoleBreakdown = ds.territorialRoleBreakdown || {};
+  let sampleSize = ds.sampleSize || ds.rawRowsCount || (Array.isArray(ds.rawRows) ? ds.rawRows.length : 0);
+  let marginOfError = ds.marginOfError || 0;
+
+  const resultsSum = Object.values(results).reduce((a: any, b: any) => a + (Number(b) || 0), 0) as number;
+  if ((resultsSum === 0 || Object.keys(results).length === 0) && Array.isArray(ds.rawRows) && ds.rawRows.length > 0) {
+    try {
+      const parsed = processSurveyMicrodata(ds.rawRows, ds.fileName || pollId);
+      if (Object.keys(parsed.results || {}).length > 0) {
+        results = parsed.results;
+        roleResults = parsed.roleResults;
+        roleValidResults = parsed.roleValidResults;
+        roleRawCounts = parsed.roleRawCounts;
+        roleStats = parsed.roleStats;
+        territorialBreakdown = parsed.territorialBreakdown;
+        territorialRoleBreakdown = parsed.territorialRoleBreakdown;
+        sampleSize = parsed.sampleSize;
+        marginOfError = parsed.marginOfError;
+      }
+    } catch (err) {
+      console.warn(`[Storage] Não foi possível re-computar microdados para ${pollId}:`, err);
+    }
+  }
+
   return {
     id: pollId,
     institute: ds.institute || "Não Informado",
     registryNumber: ds.registryNumber || "",
     conre: ds.conre || "",
     statistician: ds.statistician || "",
-    sampleSize: ds.sampleSize || ds.rawRowsCount || 0,
-    marginOfError: ds.marginOfError || 0,
+    sampleSize,
+    marginOfError,
     confidenceLevel: ds.confidenceLevel || 0,
     fieldworkStart: fStart,
     fieldworkEnd: fEnd,
     medianDate: fMedian,
     type: ds.type || "Registrada",
-    results: ds.results || {},
-    roleResults: ds.roleResults || {},
-    roleValidResults: ds.roleValidResults || {},
-    roleRawCounts: ds.roleRawCounts || {},
-    roleStats: ds.roleStats || {},
-    territorialBreakdown: ds.territorialBreakdown || {},
-    territorialRoleBreakdown: ds.territorialRoleBreakdown || {},
+    results,
+    roleResults,
+    roleValidResults,
+    roleRawCounts,
+    roleStats,
+    territorialBreakdown,
+    territorialRoleBreakdown,
     coletas: ds.rawRows || [],
     dados: ds.rawRows || [],
     rawRows: ds.rawRows || [],
@@ -190,6 +283,35 @@ try {
     if (Array.isArray(parsed)) {
       datasets = parsed;
       console.log(`[Storage] Carregados ${datasets.length} datasets de microdados do disco.`);
+
+      // Self-repair any dataset with missing or 0 results
+      let datasetsModified = false;
+      datasets.forEach((ds) => {
+        const sum = Object.values(ds.results || {}).reduce((a: any, b: any) => a + (Number(b) || 0), 0) as number;
+        if ((sum === 0 || Object.keys(ds.results || {}).length === 0) && Array.isArray(ds.rawRows) && ds.rawRows.length > 0) {
+          try {
+            const p = processSurveyMicrodata(ds.rawRows, ds.fileName);
+            if (Object.keys(p.results || {}).length > 0) {
+              ds.results = p.results;
+              ds.roleResults = p.roleResults;
+              ds.roleValidResults = p.roleValidResults;
+              ds.roleRawCounts = p.roleRawCounts;
+              ds.roleStats = p.roleStats;
+              ds.territorialBreakdown = p.territorialBreakdown;
+              ds.territorialRoleBreakdown = p.territorialRoleBreakdown;
+              ds.sampleSize = p.sampleSize;
+              ds.marginOfError = p.marginOfError;
+              datasetsModified = true;
+              console.log(`[Storage] Dataset reparado: ${ds.fileName}`);
+            }
+          } catch (e) {
+            console.warn(`[Storage] Erro ao reparar dataset ${ds.fileName}:`, e);
+          }
+        }
+      });
+      if (datasetsModified) {
+        fs.writeFileSync(DATASETS_FILE, JSON.stringify(datasets, null, 2), "utf-8");
+      }
     }
   }
 } catch (e) {
@@ -212,6 +334,38 @@ try {
         fs.writeFileSync(BACKUP_POLLS, JSON.stringify(polls, null, 2), "utf-8");
       }
       console.log(`[Storage] Carregadas ${polls.length} pesquisas permanentes válidas do disco.`);
+
+      // Self-repair any poll with missing or 0 results if it has rawRows
+      let pollsModified = false;
+      polls.forEach((p) => {
+        const sum = Object.values(p.results || {}).reduce((a: any, b: any) => a + (Number(b) || 0), 0) as number;
+        const rows = p.rawRows || p.dados || p.coletas;
+        if ((sum === 0 || Object.keys(p.results || {}).length === 0) && Array.isArray(rows) && rows.length > 0) {
+          try {
+            const parsedMicro = processSurveyMicrodata(rows, p.fileName || p.id);
+            if (Object.keys(parsedMicro.results || {}).length > 0) {
+              p.results = parsedMicro.results;
+              p.roleResults = parsedMicro.roleResults;
+              p.roleValidResults = parsedMicro.roleValidResults;
+              p.roleRawCounts = parsedMicro.roleRawCounts;
+              p.roleStats = parsedMicro.roleStats;
+              p.sampleSize = parsedMicro.sampleSize;
+              p.marginOfError = parsedMicro.marginOfError;
+              p.territorialBreakdown = parsedMicro.territorialBreakdown;
+              p.territorialRoleBreakdown = parsedMicro.territorialRoleBreakdown;
+              pollsModified = true;
+              console.log(`[Storage] Pesquisa reparada: ${p.id}`);
+            }
+          } catch (e) {
+            console.warn(`[Storage] Erro ao reparar pesquisa ${p.id}:`, e);
+          }
+        }
+      });
+      if (pollsModified) {
+        fs.writeFileSync(POLLS_FILE, JSON.stringify(polls, null, 2), "utf-8");
+        const BACKUP_POLLS = path.join(DATA_DIR, "backup_polls.json");
+        fs.writeFileSync(BACKUP_POLLS, JSON.stringify(polls, null, 2), "utf-8");
+      }
     }
   }
 } catch (e) {
@@ -252,10 +406,23 @@ class AsyncFileMutex {
 const persistenceMutex = new AsyncFileMutex();
 
 async function atomicWriteJson(filePath: string, data: any): Promise<void> {
-  const tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 8)}.tmp`;
-  const serialized = JSON.stringify(data, null, 2);
-  await fs.promises.writeFile(tempPath, serialized, "utf-8");
-  await fs.promises.rename(tempPath, filePath);
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 8)}.tmp`;
+    const serialized = JSON.stringify(data, null, 2);
+    await fs.promises.writeFile(tempPath, serialized, "utf-8");
+    await fs.promises.rename(tempPath, filePath);
+  } catch (err) {
+    console.error(`[Storage] Erro ao gravar atomicamente em ${filePath}:`, err);
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+    } catch (fallbackErr) {
+      console.warn(`[Storage] Falha no fallback de gravação para ${filePath}:`, fallbackErr);
+    }
+  }
 }
 
 async function savePollsToDiskAsync(): Promise<void> {
@@ -354,8 +521,15 @@ let accessRequests: AccessRequest[] = [
 
 // Carregar solicitações e acessos persistidos do disco
 try {
+  let fileToRead = "";
   if (fs.existsSync(ACCESS_REQUESTS_FILE)) {
-    const raw = fs.readFileSync(ACCESS_REQUESTS_FILE, "utf-8");
+    fileToRead = ACCESS_REQUESTS_FILE;
+  } else if (fs.existsSync(path.join(BASE_DATA_DIR, "persistent_access_requests.json"))) {
+    fileToRead = path.join(BASE_DATA_DIR, "persistent_access_requests.json");
+  }
+
+  if (fileToRead) {
+    const raw = fs.readFileSync(fileToRead, "utf-8");
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
       accessRequests = parsed;
@@ -433,33 +607,47 @@ function verifyAdminToken(token: string): { email: string; role: string; uid: st
 
 // Middleware de Autenticação e RBAC Estrito (Blindado contra Bypasses)
 async function authenticateUser(req: express.Request, res: express.Response, next: express.NextFunction) {
-  // Rotas não-API (assets do Vite, SPA frontend) não requerem autenticação por API token
-  if (!req.path.startsWith("/api/")) {
-    return next();
-  }
+  try {
+    const cleanPath = req.path.replace(/\/+$/, "") || "/";
 
-  // Proteção obrigatória contra bypass em produção
-  if (
-    process.env.NODE_ENV === "production" &&
-    process.env.ALLOW_DEV_AUTH_BYPASS === "true"
-  ) {
-    throw new Error(
-      "ALLOW_DEV_AUTH_BYPASS não pode ser habilitado em produção."
-    );
-  }
+    // Rotas não-API (assets do Vite, SPA frontend) não requerem autenticação por API token
+    if (!cleanPath.startsWith("/api") && !cleanPath.startsWith("/auth")) {
+      return next();
+    }
 
-  // Endpoints públicos da API documentados
-  if (
-    req.path === "/api/health" ||
-    req.path === "/api/territories" ||
-    req.path === "/api/auth/admin-login" ||
-    req.path === "/api/auth/session" ||
-    req.path === "/api/auth/request-access" ||
-    req.path === "/api/auth/check-access"
-  ) {
-    (req as any).user = { uid: "public-viewer", role: "Viewer" };
-    return next();
-  }
+    // Proteção obrigatória contra bypass em produção
+    if (
+      process.env.NODE_ENV === "production" &&
+      process.env.ALLOW_DEV_AUTH_BYPASS === "true"
+    ) {
+      return res.status(403).json({
+        success: false,
+        status: "error",
+        error: "ALLOW_DEV_AUTH_BYPASS não pode ser habilitado em produção.",
+        message: "Configuração de ambiente inválida para produção."
+      });
+    }
+
+    // Endpoints públicos da API documentados (com suporte a prefixos /api e sem /api)
+    const publicEndpoints = [
+      "/api/health",
+      "/health",
+      "/api/territories",
+      "/territories",
+      "/api/auth/admin-login",
+      "/auth/admin-login",
+      "/api/auth/session",
+      "/auth/session",
+      "/api/auth/request-access",
+      "/auth/request-access",
+      "/api/auth/check-access",
+      "/auth/check-access"
+    ];
+
+    if (publicEndpoints.includes(cleanPath)) {
+      (req as any).user = { uid: "public-viewer", role: "Viewer" };
+      return next();
+    }
 
   // 1. Dev Bypass controlado: avaliado ANTES da exigência de token
   // O bypass só pode funcionar quando as duas condições forem estritamente verdadeiras:
@@ -648,9 +836,20 @@ async function authenticateUser(req: express.Request, res: express.Response, nex
     return next();
   } catch (tokenErr: any) {
     return res.status(401).json({
+      success: false,
       status: "error",
       code: "AUTH_TOKEN_INVALID",
+      error: "Token de autenticação inválido ou expirado.",
       message: "Token de autenticação inválido ou expirado."
+    });
+  }
+  } catch (err: any) {
+    console.error("[authenticateUser Error]", err);
+    return res.status(500).json({
+      success: false,
+      status: "error",
+      error: "Falha interna no serviço de autenticação.",
+      message: "Falha interna no serviço de autenticação."
     });
   }
 }
@@ -700,7 +899,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Solicitação de Acesso ao Sistema SEIE (Qualquer usuário/visitante)
-app.post("/api/auth/request-access", (req, res) => {
+const handleRequestAccess: express.RequestHandler = (req, res) => {
   try {
     const { email, name, password, organization, notes } = req.body || {};
     const cleanEmail = (email || "").trim().toLowerCase().replace(/[\s\.,;:]+$/, "");
@@ -709,6 +908,8 @@ app.post("/api/auth/request-access", (req, res) => {
 
     if (!cleanName) {
       return res.status(400).json({
+        success: false,
+        error: "Nome Completo é obrigatório para solicitar acesso.",
         status: "error",
         code: "NAME_REQUIRED",
         message: "Nome Completo é obrigatório para solicitar acesso."
@@ -717,6 +918,8 @@ app.post("/api/auth/request-access", (req, res) => {
 
     if (!cleanEmail || !cleanEmail.includes("@")) {
       return res.status(400).json({
+        success: false,
+        error: "E-mail válido é obrigatório para solicitar acesso.",
         status: "error",
         code: "INVALID_EMAIL",
         message: "E-mail válido é obrigatório para solicitar acesso."
@@ -725,6 +928,8 @@ app.post("/api/auth/request-access", (req, res) => {
 
     if (!rawPassword || rawPassword.length < 4) {
       return res.status(400).json({
+        success: false,
+        error: "A senha desejada deve possuir no mínimo 4 caracteres.",
         status: "error",
         code: "PASSWORD_TOO_SHORT",
         message: "A senha desejada deve possuir no mínimo 4 caracteres."
@@ -733,7 +938,8 @@ app.post("/api/auth/request-access", (req, res) => {
 
     // Sidney é sempre o Administrador Oficial imediato
     if (cleanEmail === "sidneynapsec@gmail.com") {
-      return res.json({
+      return res.status(200).json({
+        success: true,
         status: "approved",
         role: "Administrator",
         message: "Administrador Central do SEIE reconhecido."
@@ -746,19 +952,20 @@ app.post("/api/auth/request-access", (req, res) => {
       const existing = accessRequests[existingIndex];
       existing.name = cleanName;
       existing.passwordHash = passwordHash;
-      if (organization) existing.organization = organization;
-      if (notes) existing.notes = notes;
+      if (organization) existing.organization = String(organization).trim();
+      if (notes) existing.notes = String(notes).trim();
       if (existing.status !== "approved") {
         existing.status = "pending";
         delete existing.grantedRole;
       }
       existing.requestedAt = new Date().toISOString();
       saveAccessRequestsToDisk();
-      return res.json({
+      return res.status(200).json({
+        success: true,
         status: existing.status,
         message: existing.status === "approved"
-          ? "Seu acesso já foi aprovado! Você já pode entrar com seu e-mail e nova senha."
-          : "Solicitação enviada com sucesso! Aguarde a liberação do administrador."
+          ? "Seu acesso já foi aprovado! Você já pode entrar com seu e-mail e senha."
+          : "Cadastro realizado com sucesso! Aguarde a liberação do administrador."
       });
     }
 
@@ -771,35 +978,46 @@ app.post("/api/auth/request-access", (req, res) => {
       status: "pending",
       requestedAt: new Date().toISOString(),
       notes: notes ? String(notes).trim() : ""
-      // O usuário NÃO escolhe nível de privilégio/perfil. O pedido é salvo com status "Pendente" e perfil indefinido.
     };
 
     accessRequests.unshift(newReq);
     saveAccessRequestsToDisk();
 
-    return res.json({
+    return res.status(200).json({
+      success: true,
       status: "pending",
-      message: "Solicitação enviada com sucesso! Aguarde a liberação do administrador."
+      message: "Cadastro realizado com sucesso! Aguarde a liberação do administrador."
     });
   } catch (err: any) {
+    console.error("[SEIE /api/auth/request-access Error]", err);
     return res.status(500).json({
+      success: false,
+      error: "Falha ao registrar solicitação: " + (err?.message || "Erro interno do servidor"),
       status: "error",
-      message: "Falha ao registrar solicitação: " + (err?.message || "Erro interno")
+      message: "Falha ao registrar solicitação: " + (err?.message || "Erro interno do servidor")
     });
   }
-});
+};
+
+app.post(["/api/auth/request-access", "/auth/request-access"], handleRequestAccess);
 
 // Verificação do status de acesso de um e-mail específico
-app.get("/api/auth/check-access", (req, res) => {
+const handleCheckAccess: express.RequestHandler = (req, res) => {
   try {
     const emailQuery = String(req.query.email || "").trim().toLowerCase();
     if (!emailQuery) {
-      return res.status(400).json({ status: "error", message: "Parâmetro email é obrigatório." });
+      return res.status(400).json({
+        success: false,
+        error: "Parâmetro email é obrigatório.",
+        status: "error",
+        message: "Parâmetro email é obrigatório."
+      });
     }
 
     // Sidney é sempre Administrador
     if (emailQuery === "sidneynapsec@gmail.com") {
-      return res.json({
+      return res.status(200).json({
+        success: true,
         status: "approved",
         role: "Administrator",
         name: "Sidney",
@@ -809,10 +1027,14 @@ app.get("/api/auth/check-access", (req, res) => {
 
     const found = accessRequests.find((r) => r.email.toLowerCase() === emailQuery);
     if (!found) {
-      return res.json({ status: "not_requested" });
+      return res.status(200).json({
+        success: true,
+        status: "not_requested"
+      });
     }
 
-    return res.json({
+    return res.status(200).json({
+      success: true,
       status: found.status,
       role: found.grantedRole || null,
       name: found.name,
@@ -822,9 +1044,17 @@ app.get("/api/auth/check-access", (req, res) => {
       approvedBy: found.approvedBy
     });
   } catch (err: any) {
-    return res.status(500).json({ status: "error", message: err?.message || "Erro interno" });
+    console.error("[SEIE /api/auth/check-access Error]", err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || "Erro interno do servidor",
+      status: "error",
+      message: err?.message || "Erro interno do servidor"
+    });
   }
-});
+};
+
+app.get(["/api/auth/check-access", "/auth/check-access"], handleCheckAccess);
 
 // Listagem de solicitações e permissões de acesso (Exclusivo para Administrador Sidney)
 app.get("/api/auth/access-requests", requireAdmin, (req, res) => {
@@ -928,7 +1158,7 @@ app.post("/api/auth/manage-access", requireAdmin, (req, res) => {
 });
 
 // Autenticação Unificada do SEIE (Validação de credenciais e status de liberação)
-app.post("/api/auth/admin-login", (req, res) => {
+const handleAdminLogin: express.RequestHandler = (req, res) => {
   try {
     const { email, password } = req.body || {};
     const requestedEmail = (email || "")
@@ -939,8 +1169,10 @@ app.post("/api/auth/admin-login", (req, res) => {
 
     if (!requestedEmail || !inputPass) {
       return res.status(400).json({
+        success: false,
         status: "error",
         code: "INVALID_CREDENTIALS",
+        error: "E-mail ou senha incorretos.",
         message: "E-mail ou senha incorretos."
       });
     }
@@ -966,14 +1198,17 @@ app.post("/api/auth/admin-login", (req, res) => {
 
       if (!isMatch) {
         return res.status(401).json({
+          success: false,
           status: "error",
           code: "INVALID_CREDENTIALS",
+          error: "E-mail ou senha incorretos.",
           message: "E-mail ou senha incorretos."
         });
       }
 
       const token = generateAdminToken(requestedEmail, "Administrator");
-      return res.json({
+      return res.status(200).json({
+        success: true,
         status: "success",
         token,
         user: {
@@ -989,8 +1224,10 @@ app.post("/api/auth/admin-login", (req, res) => {
     const found = accessRequests.find((r) => r.email.toLowerCase() === requestedEmail);
     if (!found) {
       return res.status(404).json({
+        success: false,
         status: "error",
         code: "USER_NOT_FOUND",
+        error: "Usuário não encontrado. Deseja solicitar acesso?",
         message: "Usuário não encontrado. Deseja solicitar acesso?"
       });
     }
@@ -1000,8 +1237,10 @@ app.post("/api/auth/admin-login", (req, res) => {
       const hashedInput = hashUserPassword(inputPass);
       if (hashedInput !== found.passwordHash) {
         return res.status(401).json({
+          success: false,
           status: "error",
           code: "INVALID_CREDENTIALS",
+          error: "E-mail ou senha incorretos.",
           message: "E-mail ou senha incorretos."
         });
       }
@@ -1014,18 +1253,22 @@ app.post("/api/auth/admin-login", (req, res) => {
     // 4. Verificação de status
     if (found.status === "pending") {
       return res.status(403).json({
+        success: false,
         status: "error",
         code: "ACCESS_PENDING_APPROVAL",
         accessStatus: "pending",
+        error: "Seu acesso ainda está em análise pelo administrador.",
         message: "Seu acesso ainda está em análise pelo administrador."
       });
     }
 
     if (found.status === "rejected") {
       return res.status(403).json({
+        success: false,
         status: "error",
         code: "ACCESS_REJECTED",
         accessStatus: "rejected",
+        error: "Seu acesso foi recusado ou bloqueado pelo administrador.",
         message: "Seu acesso foi recusado ou bloqueado pelo administrador."
       });
     }
@@ -1033,7 +1276,8 @@ app.post("/api/auth/admin-login", (req, res) => {
     if (found.status === "approved") {
       const assignedRole = found.grantedRole || "Viewer";
       const token = generateAdminToken(requestedEmail, assignedRole);
-      return res.json({
+      return res.status(200).json({
+        success: true,
         status: "success",
         token,
         user: {
@@ -1046,17 +1290,24 @@ app.post("/api/auth/admin-login", (req, res) => {
     }
 
     return res.status(403).json({
+      success: false,
       status: "error",
       code: "ACCESS_UNAUTHORIZED",
+      error: "Acesso não autorizado.",
       message: "Acesso não autorizado."
     });
   } catch (err: any) {
+    console.error("[SEIE /api/auth/admin-login Error]", err);
     return res.status(500).json({
+      success: false,
       status: "error",
+      error: "Falha ao processar autenticação: " + (err?.message || "Erro interno"),
       message: "Falha ao processar autenticação: " + (err?.message || "Erro interno")
     });
   }
-});
+};
+
+app.post(["/api/auth/admin-login", "/auth/admin-login"], handleAdminLogin);
 
 // Alteração de Senha do Administrador Total (Exclusivo para Sidney autenticado)
 app.post("/api/auth/change-admin-password", requireAdmin, (req, res) => {
@@ -1090,56 +1341,80 @@ app.post("/api/auth/change-admin-password", requireAdmin, (req, res) => {
 });
 
 // Verificação de sessão de autenticação ativa
-app.get("/api/auth/session", (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ status: "unauthenticated" });
-  }
+const handleSession: express.RequestHandler = (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        status: "unauthenticated",
+        error: "Cabeçalho de autorização ausente ou mal formatado."
+      });
+    }
 
-  const token = authHeader.split(" ")[1];
-  if (token && token.startsWith("seie_")) {
-    const payload = verifyAdminToken(token);
-    if (payload) {
-      const emailLower = (payload.email || "").toLowerCase();
+    const token = authHeader.split(" ")[1];
+    if (token && token.startsWith("seie_")) {
+      const payload = verifyAdminToken(token);
+      if (payload) {
+        const emailLower = (payload.email || "").toLowerCase();
 
-      // Sidney é sempre Administrador Máximo
-      if (emailLower === "sidneynapsec@gmail.com") {
-        return res.json({
+        // Sidney é sempre Administrador Máximo
+        if (emailLower === "sidneynapsec@gmail.com") {
+          return res.status(200).json({
+            success: true,
+            status: "authenticated",
+            user: {
+              uid: payload.uid,
+              email: payload.email,
+              displayName: "Sidney (Administrador SEIE)",
+              role: "Administrator"
+            }
+          });
+        }
+
+        // Para outros usuários, verificar se continuam com acesso liberado por Sidney
+        const found = accessRequests.find((r) => r.email.toLowerCase() === emailLower);
+        if (!found || found.status !== "approved") {
+          return res.status(403).json({
+            success: false,
+            status: "unauthorized",
+            accessStatus: found?.status || "not_requested",
+            error: "Acesso pendente de liberação pelo Administrador Sidney.",
+            message: "Acesso pendente de liberação pelo Administrador Sidney."
+          });
+        }
+
+        const activeRole = found.grantedRole || payload.role || "Viewer";
+        return res.status(200).json({
+          success: true,
           status: "authenticated",
           user: {
             uid: payload.uid,
             email: payload.email,
-            displayName: "Sidney (Administrador SEIE)",
-            role: "Administrator"
+            displayName: found.name || payload.email.split("@")[0],
+            role: activeRole
           }
         });
       }
-
-      // Para outros usuários, verificar se continuam com acesso liberado por Sidney
-      const found = accessRequests.find((r) => r.email.toLowerCase() === emailLower);
-      if (!found || found.status !== "approved") {
-        return res.status(403).json({
-          status: "unauthorized",
-          accessStatus: found?.status || "not_requested",
-          message: "Acesso pendente de liberação pelo Administrador Sidney."
-        });
-      }
-
-      const activeRole = found.grantedRole || payload.role || "Viewer";
-      return res.json({
-        status: "authenticated",
-        user: {
-          uid: payload.uid,
-          email: payload.email,
-          displayName: found.name || payload.email.split("@")[0],
-          role: activeRole
-        }
-      });
     }
-  }
 
-  return res.status(401).json({ status: "unauthenticated" });
-});
+    return res.status(401).json({
+      success: false,
+      status: "unauthenticated",
+      error: "Token expirado ou inválido."
+    });
+  } catch (err: any) {
+    console.error("[SEIE /api/auth/session Error]", err);
+    return res.status(500).json({
+      success: false,
+      status: "error",
+      error: err?.message || "Erro interno do servidor",
+      message: err?.message || "Erro interno do servidor"
+    });
+  }
+};
+
+app.get(["/api/auth/session", "/auth/session"], handleSession);
 
 // Download do código-fonte completo em arquivo .ZIP (com exclusão estrita de segredos e credenciais)
 app.get("/api/download-source-zip", requireAdmin, (req, res) => {
@@ -1812,6 +2087,45 @@ Integrar novas pesquisas registradas que cobrirem o fim de junho de 2026.`
     console.error("Gemini API Error in server.ts:", error);
     res.status(500).json({ status: "error", message: error.message || "Erro desconhecido na API do Gemini" });
   }
+});
+
+// 404 handler estrito em JSON para qualquer rota de API ou Auth não encontrada
+app.use((req, res, next) => {
+  const cleanPath = req.path.replace(/\/+$/, "") || "/";
+  if (cleanPath.startsWith("/api") || cleanPath.startsWith("/auth")) {
+    return res.status(404).json({
+      success: false,
+      status: "error",
+      code: "API_ROUTE_NOT_FOUND",
+      error: `Rota da API não encontrada: ${req.method} ${req.originalUrl || req.path}`,
+      message: `Rota da API não encontrada: ${req.method} ${req.originalUrl || req.path}`
+    });
+  }
+  next();
+});
+
+// Middleware global de tratamento de erros Express (retorna SEMPRE JSON válido, nunca HTML)
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("[SEIE Global Error Handler]", err);
+  const statusCode = typeof err?.status === "number" && err.status >= 400 && err.status < 600 ? err.status : 500;
+  if (!res.headersSent) {
+    res.status(statusCode).json({
+      success: false,
+      status: "error",
+      code: err?.code || "INTERNAL_SERVER_ERROR",
+      error: err?.message || "Ocorreu um erro interno no servidor.",
+      message: err?.message || "Ocorreu um erro interno no servidor."
+    });
+  }
+});
+
+// Handlers globais de processo para evitar quedas abruptas no Node / Vercel
+process.on("unhandledRejection", (reason: any) => {
+  console.error("[SEIE Process] Unhandled Promise Rejection:", reason);
+});
+
+process.on("uncaughtException", (err: any) => {
+  console.error("[SEIE Process] Uncaught Exception:", err);
 });
 
 // Serve frontend assets in production and Vite middleware in development

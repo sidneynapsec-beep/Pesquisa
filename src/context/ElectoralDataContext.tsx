@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { Poll, Territory } from "../types";
 import {
   parseSurveyFile,
+  processSurveyMicrodata,
   ParsedPollDataset,
   MunicipalityRoleTally,
   parseFlexibleDate,
@@ -406,7 +407,32 @@ export const ElectoralDataProvider: React.FC<{ children: React.ReactNode }> = ({
         if (resPolls.value.ok) {
           const data = await resPolls.value.json();
           if (data && data.data && Array.isArray(data.data)) {
-            serverPolls = data.data.filter(isValidPoll);
+            serverPolls = data.data.filter(isValidPoll).map((p: Poll) => {
+              const sum = Object.values(p.results || {}).reduce((acc: number, v: any) => acc + (Number(v) || 0), 0);
+              const rows = p.rawRows || p.dados || p.coletas;
+              if ((sum === 0 || Object.keys(p.results || {}).length === 0) && Array.isArray(rows) && rows.length > 0) {
+                try {
+                  const parsed = processSurveyMicrodata(rows, p.fileName || p.id);
+                  if (Object.keys(parsed.results || {}).length > 0) {
+                    return {
+                      ...p,
+                      results: parsed.results,
+                      roleResults: parsed.roleResults,
+                      roleValidResults: parsed.roleValidResults,
+                      roleRawCounts: parsed.roleRawCounts,
+                      roleStats: parsed.roleStats,
+                      sampleSize: parsed.sampleSize,
+                      marginOfError: parsed.marginOfError,
+                      territorialBreakdown: parsed.territorialBreakdown,
+                      territorialRoleBreakdown: parsed.territorialRoleBreakdown
+                    };
+                  }
+                } catch (err) {
+                  console.warn("[ElectoralData] Não foi possível recalcular microdados da pesquisa:", err);
+                }
+              }
+              return p;
+            });
           }
         } else {
           console.warn(`[ElectoralData] /api/polls respondeu com status HTTP ${resPolls.value.status}`);
@@ -461,26 +487,58 @@ export const ElectoralDataProvider: React.FC<{ children: React.ReactNode }> = ({
           parseFlexibleDate((ds as any).dataMediana) ||
           (resolvedStart && resolvedEnd ? computeMedianDate(resolvedStart, resolvedEnd) : resolvedStart || "");
 
+        let activeResults = ds.results || {};
+        let activeRoleResults = ds.roleResults || {};
+        let activeRoleValidResults = ds.roleValidResults || {};
+        let activeRoleRawCounts = ds.roleRawCounts || {};
+        let activeRoleStats = ds.roleStats || {};
+        let activeTerritorial = ds.territorialBreakdown || {};
+        let activeTerritorialRole = ds.territorialRoleBreakdown || {};
+        let activeSampleSize = ds.sampleSize || ds.rawRowsCount || 0;
+        let activeMargin = ds.marginOfError || 0;
+
+        const resultsSum = Object.values(activeResults).reduce((acc: number, v: any) => acc + (Number(v) || 0), 0);
+        if ((resultsSum === 0 || Object.keys(activeResults).length === 0) && Array.isArray(ds.rawRows) && ds.rawRows.length > 0) {
+          try {
+            const parsed = processSurveyMicrodata(ds.rawRows, ds.fileName);
+            if (Object.keys(parsed.results || {}).length > 0) {
+              activeResults = parsed.results;
+              activeRoleResults = parsed.roleResults;
+              activeRoleValidResults = parsed.roleValidResults;
+              activeRoleRawCounts = parsed.roleRawCounts;
+              activeRoleStats = parsed.roleStats;
+              activeTerritorial = parsed.territorialBreakdown;
+              activeTerritorialRole = parsed.territorialRoleBreakdown;
+              activeSampleSize = parsed.sampleSize;
+              activeMargin = parsed.marginOfError;
+              if (parsed.fieldworkStart && !resolvedStart) resolvedStart = parsed.fieldworkStart;
+              if (parsed.fieldworkEnd && !resolvedEnd) resolvedEnd = parsed.fieldworkEnd;
+            }
+          } catch (e) {
+            console.warn("[ElectoralData] Não foi possível recalcular microdados do dataset:", e);
+          }
+        }
+
         return {
           id: pollId,
           institute: ds.institute || "Não Informado",
           registryNumber: ds.registryNumber || "",
           conre: ds.conre || "",
           statistician: ds.statistician || "",
-          sampleSize: ds.sampleSize || ds.rawRowsCount || 0,
-          marginOfError: ds.marginOfError || 0,
+          sampleSize: activeSampleSize,
+          marginOfError: activeMargin,
           confidenceLevel: ds.confidenceLevel || 0,
           fieldworkStart: resolvedStart,
           fieldworkEnd: resolvedEnd,
           medianDate: resolvedMedian,
           type: ds.type || "Registrada",
-          results: ds.results || {},
-          roleResults: ds.roleResults || {},
-          roleValidResults: ds.roleValidResults || {},
-          roleRawCounts: ds.roleRawCounts || {},
-          roleStats: ds.roleStats || {},
-          territorialBreakdown: ds.territorialBreakdown || {},
-          territorialRoleBreakdown: ds.territorialRoleBreakdown || {},
+          results: activeResults,
+          roleResults: activeRoleResults,
+          roleValidResults: activeRoleValidResults,
+          roleRawCounts: activeRoleRawCounts,
+          roleStats: activeRoleStats,
+          territorialBreakdown: activeTerritorial,
+          territorialRoleBreakdown: activeTerritorialRole,
           coletas: ds.rawRows || [],
           dados: ds.rawRows || [],
           rawRows: ds.rawRows || [],

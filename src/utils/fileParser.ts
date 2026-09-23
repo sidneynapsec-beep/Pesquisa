@@ -607,9 +607,30 @@ export function matchOfficialCandidate(rawName: string, roleFilter?: string): Ma
     const cand = pool.find((c) => c.candidate.name.includes("Dr. Helton"));
     if (cand) return { candidateName: cand.candidate.name, role: cand.role, partyNumber: cand.candidate.partyNumber };
   }
-  if (norm.includes("taty") || norm.includes("cristina de jesus")) {
+  if (norm.includes("taty") || norm.includes("cristina de jesus") || norm.includes("taty cristina")) {
     const cand = pool.find((c) => c.candidate.name.includes("Taty Cristina"));
     if (cand) return { candidateName: cand.candidate.name, role: cand.role, partyNumber: cand.candidate.partyNumber };
+    return { candidateName: "Taty Cristina De Jesus", role: "Governador" };
+  }
+
+  // Presidente
+  if (norm.includes("lula") || norm.includes("luiz inacio")) {
+    return { candidateName: "Lula", role: "Presidente", partyNumber: "13" };
+  }
+  if (norm.includes("flavio bolsonaro") || norm.includes("bolsonaro")) {
+    return { candidateName: "Flavio Bolsonaro", role: "Presidente", partyNumber: "22" };
+  }
+  if (norm.includes("cury") || norm.includes("augusto cury")) {
+    return { candidateName: "Escritor Augusto Cury", role: "Presidente" };
+  }
+  if (norm.includes("caiado") || norm.includes("ronaldo caiado")) {
+    return { candidateName: "Ronaldo Caiado", role: "Presidente" };
+  }
+  if (norm.includes("renan santos")) {
+    return { candidateName: "Renan Santos", role: "Presidente" };
+  }
+  if (norm.includes("marcal") || norm.includes("pablo marcal")) {
+    return { candidateName: "Pablo Marçal", role: "Presidente" };
   }
 
   // Senador
@@ -822,7 +843,6 @@ export async function parseSurveyFile(
   fallbackReferenceDate?: string,
   fallbackInstitute?: string
 ): Promise<ParsedPollDataset> {
-  const warnings: string[] = [];
   const fileName = file.name;
   const isCsv = fileName.toLowerCase().endsWith(".csv");
   const isPdf = fileName.toLowerCase().endsWith(".pdf");
@@ -851,6 +871,21 @@ export async function parseSurveyFile(
   if (!rawRows || rawRows.length === 0) {
     throw new Error(`O arquivo '${fileName}' está vazio ou não possui linhas legíveis.`);
   }
+
+  return processSurveyMicrodata(rawRows, fileName, fallbackReferenceDate, fallbackInstitute);
+}
+
+/**
+ * Core microdata processing engine that extracts candidate votes, role results,
+ * territorial tallies, margin of error, and dates from raw questionnaire interviews.
+ */
+export function processSurveyMicrodata(
+  rawRows: any[],
+  fileName: string = "",
+  fallbackReferenceDate?: string,
+  fallbackInstitute?: string
+): ParsedPollDataset {
+  const warnings: string[] = [];
 
   // Metadata Defaults
   let institute = fallbackInstitute || "CTAS";
@@ -884,7 +919,8 @@ export async function parseSurveyFile(
     "2º Senador": {},
     "Senador": {},
     "Deputado Federal": {},
-    "Deputado Estadual": {}
+    "Deputado Estadual": {},
+    "Presidente": {}
   };
   const roleValidResults: Record<string, Record<string, number>> = {
     "Governador": {},
@@ -892,7 +928,8 @@ export async function parseSurveyFile(
     "2º Senador": {},
     "Senador": {},
     "Deputado Federal": {},
-    "Deputado Estadual": {}
+    "Deputado Estadual": {},
+    "Presidente": {}
   };
   const roleRawCounts: Record<string, Record<string, number>> = {
     "Governador": {},
@@ -900,7 +937,8 @@ export async function parseSurveyFile(
     "2º Senador": {},
     "Senador": {},
     "Deputado Federal": {},
-    "Deputado Estadual": {}
+    "Deputado Estadual": {},
+    "Presidente": {}
   };
   const roleStats: Record<string, RoleStatistics> = {};
 
@@ -911,7 +949,8 @@ export async function parseSurveyFile(
     "2º Senador": {},
     "Senador": {},
     "Deputado Federal": {},
-    "Deputado Estadual": {}
+    "Deputado Estadual": {},
+    "Presidente": {}
   };
 
   const geoPoints: Array<{
@@ -926,26 +965,73 @@ export async function parseSurveyFile(
   const firstRow = rawRows[0] || {};
   const headerKeys = Object.keys(firstRow);
 
-  // Check for 15-column microdata keys
+  // Check for microdata keys with flexible conversational matching
   const govColKey = headerKeys.find((k) => {
     const n = normalizeStr(k);
-    return n === "governador" || n.startsWith("governador") || n.includes("voto governador");
+    return (
+      n === "governador" ||
+      n.startsWith("governador") ||
+      n.includes("voto governador") ||
+      n.includes("governo de sergipe") ||
+      n.includes("governo do estado") ||
+      (n.includes("governo") && !n.includes("aprovacao") && !n.includes("gestao"))
+    );
   });
   const sen1ColKey = headerKeys.find((k) => {
     const n = normalizeStr(k);
-    return n.includes("senador 01") || n.includes("senador 1") || n === "senador1" || n.includes("primeiro senador") || n === "senador";
+    return (
+      n.includes("senador 01") ||
+      n.includes("senador 1") ||
+      n === "senador1" ||
+      n.includes("primeiro senador") ||
+      ((n.includes("senador") || n.includes("senado")) &&
+        (n.includes("01") ||
+          n.includes("1") ||
+          n.includes("1o") ||
+          n.includes("1º") ||
+          n.includes("primeiro"))) ||
+      n === "senador"
+    );
   });
   const sen2ColKey = headerKeys.find((k) => {
     const n = normalizeStr(k);
-    return (n.includes("senador 02") || n.includes("senador 2") || n === "senador2" || n.includes("segundo senador")) && k !== sen1ColKey;
+    return (
+      (n.includes("senador 02") ||
+        n.includes("senador 2") ||
+        n === "senador2" ||
+        n.includes("segundo senador") ||
+        ((n.includes("senador") || n.includes("senado")) &&
+          (n.includes("02") ||
+            n.includes("2") ||
+            n.includes("2o") ||
+            n.includes("2º") ||
+            n.includes("segundo")))) &&
+      k !== sen1ColKey
+    );
   });
   const depEstColKey = headerKeys.find((k) => {
     const n = normalizeStr(k);
-    return n.includes("deputado estadual") || n === "deputado estadual" || (n.includes("estadual") && !n.includes("federal"));
+    return (
+      n.includes("deputado estadual") ||
+      n === "deputado estadual" ||
+      (n.includes("estadual") && !n.includes("federal"))
+    );
   });
   const depFedColKey = headerKeys.find((k) => {
     const n = normalizeStr(k);
-    return n.includes("deputado federal") || n === "deputado federal" || (n.includes("federal") && !n.includes("estadual"));
+    return (
+      n.includes("deputado federal") ||
+      n === "deputado federal" ||
+      (n.includes("federal") && !n.includes("estadual"))
+    );
+  });
+  const presColKey = headerKeys.find((k) => {
+    const n = normalizeStr(k);
+    return (
+      n.includes("presidente") ||
+      n.includes("presidencia") ||
+      n.includes("presidencial")
+    );
   });
 
   const muniColKey = headerKeys.find((k) => {
@@ -958,7 +1044,7 @@ export async function parseSurveyFile(
   const cepColKey = headerKeys.find((k) => normalizeStr(k).includes("cep"));
   const dateColKey = headerKeys.find((k) => normalizeStr(k).includes("inicio") || normalizeStr(k).includes("data"));
 
-  const isMicrodataSurvey = Boolean(govColKey || sen1ColKey || depEstColKey || depFedColKey);
+  const isMicrodataSurvey = Boolean(govColKey || sen1ColKey || depEstColKey || depFedColKey || presColKey);
 
   if (isMicrodataSurvey) {
     const totalInterviews = rawRows.length;
@@ -970,6 +1056,7 @@ export async function parseSurveyFile(
     const senCounts: Record<string, number> = {};
     const depEstCounts: Record<string, number> = {};
     const depFedCounts: Record<string, number> = {};
+    const presCounts: Record<string, number> = {};
 
     // Microdata per role per municipality: role -> muni -> counts
     const roleMuniData: Record<
@@ -990,7 +1077,8 @@ export async function parseSurveyFile(
       "2º Senador": {},
       "Senador": {},
       "Deputado Federal": {},
-      "Deputado Estadual": {}
+      "Deputado Estadual": {},
+      "Presidente": {}
     };
 
     const getMuniTally = (role: string, muni: string) => {
@@ -1155,6 +1243,25 @@ export async function parseSurveyFile(
           else t.validTotal += 1;
         }
       }
+
+      // 5. Presidente
+      if (presColKey) {
+        const rawValPres = row[presColKey];
+        const matchPres = matchOfficialCandidate(rawValPres, "Presidente");
+        const candPres = matchPres ? matchPres.candidateName : (rawValPres ? String(rawValPres).trim() : "Ns/Nr");
+        const isInvPres = matchPres?.isInvalid || false;
+        const isUndPres = matchPres?.isUndecided || (!matchPres || !rawValPres);
+
+        presCounts[candPres] = (presCounts[candPres] || 0) + 1;
+        if (canonicalMuni) {
+          const t = getMuniTally("Presidente", canonicalMuni);
+          t.totalSample += 1;
+          t.counts[candPres] = (t.counts[candPres] || 0) + 1;
+          if (isInvPres) t.invalidTotal += 1;
+          else if (isUndPres) t.undecidedTotal += 1;
+          else t.validTotal += 1;
+        }
+      }
     });
 
     // Helper to calculate total % and valid % for any count map
@@ -1165,7 +1272,7 @@ export async function parseSurveyFile(
 
       Object.entries(counts).forEach(([cand, count]) => {
         result[cand] = divisor > 0 ? +((count / divisor) * 100).toFixed(2) : 0;
-        if (cand !== "Branco/Nulo" && cand !== "Ns/Nr" && cand !== "Brancos/Nulos" && cand !== "Indecisos") {
+        if (cand !== "Branco/Nulo" && cand !== "Ns/Nr" && cand !== "Brancos/Nulos" && cand !== "Indecisos" && cand !== "Não sei/Não respondeu") {
           validCounts[cand] = count;
           totalValid += count;
         }
@@ -1183,7 +1290,9 @@ export async function parseSurveyFile(
     const govCalc = calcPercentages(govCounts, totalInterviews);
     roleResults["Governador"] = govCalc.totalPct;
     roleValidResults["Governador"] = govCalc.validPct;
-    Object.assign(candidateResults, govCalc.totalPct);
+    if (Object.keys(govCalc.totalPct).length > 0) {
+      Object.assign(candidateResults, govCalc.totalPct);
+    }
 
     // Senator calculations:
     // (a) 1º Senador and 2º Senador calculations
@@ -1228,6 +1337,15 @@ export async function parseSurveyFile(
     roleResults["Deputado Estadual"] = estCalc.totalPct;
     roleValidResults["Deputado Estadual"] = estCalc.validPct;
 
+    if (presColKey && Object.keys(presCounts).length > 0) {
+      const presCalc = calcPercentages(presCounts, totalInterviews);
+      roleResults["Presidente"] = presCalc.totalPct;
+      roleValidResults["Presidente"] = presCalc.validPct;
+      if (Object.keys(candidateResults).length === 0) {
+        Object.assign(candidateResults, presCalc.totalPct);
+      }
+    }
+
     const totalSenMentions = Object.values(senCounts).reduce((a, b) => a + b, 0);
     const senDivisor = totalSenMentions > 0 ? totalSenMentions : totalInterviews * 2;
 
@@ -1266,6 +1384,9 @@ export async function parseSurveyFile(
       "Deputado Federal": buildRoleStats(depFedCounts, totalInterviews),
       "Deputado Estadual": buildRoleStats(depEstCounts, totalInterviews)
     });
+    if (presColKey && Object.keys(presCounts).length > 0) {
+      roleStats["Presidente"] = buildRoleStats(presCounts, totalInterviews);
+    }
 
     Object.assign(roleRawCounts, {
       "Governador": govCounts,
@@ -1275,21 +1396,27 @@ export async function parseSurveyFile(
       "Deputado Federal": depFedCounts,
       "Deputado Estadual": depEstCounts
     });
+    if (presColKey && Object.keys(presCounts).length > 0) {
+      roleRawCounts["Presidente"] = presCounts;
+    }
 
     // Build structured territorialRoleBreakdown for all roles across municipalities
-    (["Governador", "1º Senador", "2º Senador", "Senador", "Deputado Federal", "Deputado Estadual"] as const).forEach((role) => {
-      const muniMap = roleMuniData[role];
+    (["Governador", "1º Senador", "2º Senador", "Senador", "Deputado Federal", "Deputado Estadual", "Presidente"] as const).forEach((role) => {
+      const muniMap = roleMuniData[role] || {};
       Object.entries(muniMap).forEach(([muni, t]) => {
         const percentages: Record<string, number> = {};
         const validPercentages: Record<string, number> = {};
 
         Object.entries(t.counts).forEach(([cand, count]) => {
           percentages[cand] = t.totalSample > 0 ? +((count / t.totalSample) * 100).toFixed(1) : 0;
-          if (cand !== "Branco/Nulo" && cand !== "Ns/Nr" && cand !== "Brancos/Nulos" && cand !== "Indecisos") {
+          if (cand !== "Branco/Nulo" && cand !== "Ns/Nr" && cand !== "Brancos/Nulos" && cand !== "Indecisos" && cand !== "Não sei/Não respondeu") {
             validPercentages[cand] = t.validTotal > 0 ? +((count / t.validTotal) * 100).toFixed(1) : 0;
           }
         });
 
+        if (!territorialRoleBreakdown[role]) {
+          territorialRoleBreakdown[role] = {};
+        }
         territorialRoleBreakdown[role][muni] = {
           counts: t.counts,
           totalSample: t.totalSample,
@@ -1303,7 +1430,7 @@ export async function parseSurveyFile(
     });
 
     // Legacy compatibility for Governador in territorialBreakdown
-    Object.entries(territorialRoleBreakdown["Governador"]).forEach(([muni, t]) => {
+    Object.entries(territorialRoleBreakdown["Governador"] || {}).forEach(([muni, t]) => {
       territorialBreakdown[muni] = t.validPercentages;
     });
   } else {
