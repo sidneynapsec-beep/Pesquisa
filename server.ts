@@ -1845,7 +1845,8 @@ async function startServer() {
   });
 }
 
-if (process.env.NODE_ENV !== "test") {
+// Não inicia o listener de portas na Vercel (onde roda como serverless function)
+if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   startServer();
 }
 
