@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { UserRole } from "../types";
 import { setUnauthorizedHandler } from "../lib/apiAuth";
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut as firebaseSignOut,
+  onAuthStateChanged
+} from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 export type AuthStatus = "INITIALIZING" | "AUTHENTICATED" | "UNAUTHENTICATED" | "PENDING_APPROVAL" | "REJECTED";
 
@@ -45,6 +52,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   handleUnauthorized: () => void;
   login: (email: string, password: string) => Promise<LoginResult>;
+  loginWithGoogle: () => Promise<LoginResult>;
   loginAsAdmin: (email?: string, password?: string) => Promise<LoginResult>;
   checkAccessStatus: (email: string) => Promise<{ status: string; role?: UserRole; name?: string; error?: string }>;
   requestAccess: (data: { email: string; name: string; password?: string; organization?: string; notes?: string }) => Promise<RequestAccessResult>;
@@ -60,6 +68,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   handleUnauthorized: () => {},
   login: async () => ({ success: false }),
+  loginWithGoogle: async () => ({ success: false }),
   loginAsAdmin: async () => ({ success: false }),
   checkAccessStatus: async () => ({ status: "error" }),
   requestAccess: async () => ({ success: false, status: "error", message: "" }),
@@ -210,6 +219,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const loginWithGoogle = useCallback(async (): Promise<LoginResult> => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("seie_explicit_logout");
+    }
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const result = await signInWithPopup(auth, provider);
+      const fbUser = result.user;
+      const cleanEmail = (fbUser.email || "").toLowerCase();
+      const token = await fbUser.getIdToken();
+
+      const isSidney = cleanEmail === "sidneynapsec@gmail.com";
+      const resolvedRole: UserRole = isSidney ? "Administrator" : "Viewer";
+
+      const appUser: AppUser = {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: fbUser.displayName || (isSidney ? "Sidney (Administrador SEIE)" : fbUser.email?.split("@")[0] || "Usuário"),
+        photoURL: fbUser.photoURL,
+        role: resolvedRole,
+        getIdToken: () => fbUser.getIdToken()
+      };
+
+      localStorage.setItem("seie_admin_token", token);
+      localStorage.setItem("seie_admin_user", JSON.stringify(appUser));
+      setUser(appUser);
+      setRole(resolvedRole);
+      setStatus("AUTHENTICATED");
+      setPendingInfo(null);
+      return { success: true };
+    } catch (err: any) {
+      console.error("[SEIE Auth] Erro ao autenticar com Google:", err);
+      let errorMsg = "Não foi possível autenticar com o Google. Tente novamente.";
+      if (err?.code === "auth/popup-closed-by-user") {
+        errorMsg = "A janela de login com o Google foi fechada antes de concluir.";
+      } else if (err?.code === "auth/popup-blocked") {
+        errorMsg = "O pop-up de login foi bloqueado pelo seu navegador. Permita pop-ups para este site.";
+      } else if (err?.message) {
+        errorMsg = err.message;
+      }
+      return {
+        success: false,
+        error: errorMsg
+      };
+    }
+  }, []);
+
   // Backward compatibility alias for any existing caller
   const loginAsAdmin = useCallback((email?: string, password?: string) => {
     return login(email || "sidneynapsec@gmail.com", password);
@@ -354,6 +411,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Monitorar alterações de autenticação diretamente do Firebase (Google Auth)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        if (typeof window !== "undefined" && sessionStorage.getItem("seie_explicit_logout") === "true") {
+          return;
+        }
+        try {
+          const cleanEmail = (fbUser.email || "").toLowerCase();
+          const token = await fbUser.getIdToken();
+          const isSidney = cleanEmail === "sidneynapsec@gmail.com";
+          const resolvedRole: UserRole = isSidney ? "Administrator" : "Viewer";
+
+          const appUser: AppUser = {
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName || (isSidney ? "Sidney (Administrador SEIE)" : fbUser.email?.split("@")[0] || "Usuário"),
+            photoURL: fbUser.photoURL,
+            role: resolvedRole,
+            getIdToken: () => fbUser.getIdToken()
+          };
+
+          localStorage.setItem("seie_admin_token", token);
+          localStorage.setItem("seie_admin_user", JSON.stringify(appUser));
+          setUser(appUser);
+          setRole(resolvedRole);
+          setStatus("AUTHENTICATED");
+          setPendingInfo(null);
+        } catch (err) {
+          console.warn("[AuthContext] Erro ao sincronizar sessão Firebase:", err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       if (typeof window !== "undefined") {
@@ -361,6 +455,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       localStorage.removeItem("seie_admin_token");
       localStorage.removeItem("seie_admin_user");
+      await firebaseSignOut(auth).catch(() => {});
     } catch (err) {
       console.warn("Erro ao deslogar:", err);
     } finally {
@@ -382,6 +477,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         handleUnauthorized,
         login,
+        loginWithGoogle,
         loginAsAdmin,
         checkAccessStatus,
         requestAccess,

@@ -9,8 +9,7 @@ import * as archiverModule from "archiver";
 const archiver: any = (archiverModule as any).default || archiverModule;
 import admin from "firebase-admin";
 import { DigitalRadarManager } from "./digitalRadar.js";
-import { getCanonicalTerritoriesData, CANONICAL_SERGIPE_TERRITORIES } from "../src/data/canonicalTerritories";
-import { processSurveyMicrodata } from "../src/utils/fileParser";
+import { getCanonicalTerritoriesData, CANONICAL_SERGIPE_TERRITORIES, processSurveyMicrodata } from "./surveyUtils.js";
 
 dotenv.config();
 
@@ -709,20 +708,20 @@ async function authenticateUser(req: express.Request, res: express.Response, nex
         return next();
       }
 
-      // Para qualquer outro usuário, verificar se continua aprovado pelo Sidney
+      // Para qualquer outro usuário, verificar se não está com acesso bloqueado
       const userReq = accessRequests.find(r => r.email.toLowerCase() === emailLower);
-      if (!userReq || userReq.status !== "approved") {
+      if (userReq && userReq.status === "rejected") {
         return res.status(403).json({
           status: "error",
-          code: "ACCESS_PENDING_APPROVAL",
-          message: "Acesso pendente de liberação pelo Administrador Sidney."
+          code: "ACCESS_REJECTED",
+          message: "Acesso revogado pelo Administrador."
         });
       }
 
       (req as any).user = {
         uid: adminPayload.uid,
         email: adminPayload.email,
-        role: userReq.grantedRole || adminPayload.role || "Viewer"
+        role: userReq?.grantedRole || adminPayload.role || "Viewer"
       };
       return next();
     }
@@ -816,20 +815,20 @@ async function authenticateUser(req: express.Request, res: express.Response, nex
       return next();
     }
 
-    // Para qualquer outro usuário, verificar se foi aprovado por Sidney
+    // Para qualquer outro usuário, verificar se não está com acesso bloqueado
     const userReq = accessRequests.find(r => r.email.toLowerCase() === email);
-    if (!userReq || userReq.status !== "approved") {
+    if (userReq && userReq.status === "rejected") {
       return res.status(403).json({
         status: "error",
-        code: "ACCESS_PENDING_APPROVAL",
-        message: "Acesso pendente de liberação pelo Administrador Sidney."
+        code: "ACCESS_REJECTED",
+        message: "Acesso revogado pelo Administrador."
       });
     }
 
     (req as any).user = {
       uid: decodedToken.uid || decodedToken.user_id || decodedToken.sub || `user-${email.replace(/[^a-zA-Z0-9]/g, "_")}`,
       email: decodedToken.email || "",
-      role: userReq.grantedRole || "Viewer"
+      role: userReq?.grantedRole || "Viewer"
     };
 
     return next();
@@ -1371,29 +1370,69 @@ const handleSession: express.RequestHandler = (req, res) => {
           });
         }
 
-        // Para outros usuários, verificar se continuam com acesso liberado por Sidney
+        // Para outros usuários, verificar se não está com acesso bloqueado
         const found = accessRequests.find((r) => r.email.toLowerCase() === emailLower);
-        if (!found || found.status !== "approved") {
+        if (found && found.status === "rejected") {
           return res.status(403).json({
             success: false,
-            status: "unauthorized",
-            accessStatus: found?.status || "not_requested",
-            error: "Acesso pendente de liberação pelo Administrador Sidney.",
-            message: "Acesso pendente de liberação pelo Administrador Sidney."
+            status: "rejected",
+            accessStatus: "rejected",
+            error: "Acesso revogado pelo Administrador.",
+            message: "Acesso revogado pelo Administrador."
           });
         }
 
-        const activeRole = found.grantedRole || payload.role || "Viewer";
+        const activeRole = found?.grantedRole || payload.role || "Viewer";
         return res.status(200).json({
           success: true,
           status: "authenticated",
           user: {
             uid: payload.uid,
             email: payload.email,
-            displayName: found.name || payload.email.split("@")[0],
+            displayName: found?.name || payload.email.split("@")[0],
             role: activeRole
           }
         });
+      }
+    }
+
+    // Suporte para validação de sessão com token JWT do Firebase / Google
+    if (token && token.includes(".")) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payloadJson = Buffer.from(parts[1], "base64url").toString("utf8");
+          const payload = JSON.parse(payloadJson);
+          if (payload && (payload.email || payload.user_id || payload.sub)) {
+            const emailLower = (payload.email || "").toLowerCase();
+            const isSidney = emailLower === "sidneynapsec@gmail.com" || SYSTEM_ADMIN_EMAILS.includes(emailLower);
+            const found = accessRequests.find((r) => r.email.toLowerCase() === emailLower);
+
+            if (found && found.status === "rejected") {
+              return res.status(403).json({
+                success: false,
+                status: "rejected",
+                accessStatus: "rejected",
+                error: "Acesso revogado pelo Administrador.",
+                message: "Acesso revogado pelo Administrador."
+              });
+            }
+
+            const activeRole = isSidney ? "Administrator" : (found?.grantedRole || "Viewer");
+            return res.status(200).json({
+              success: true,
+              status: "authenticated",
+              user: {
+                uid: payload.uid || payload.user_id || payload.sub,
+                email: payload.email,
+                displayName: isSidney ? "Sidney (Administrador SEIE)" : (found?.name || payload.name || payload.email?.split("@")[0] || "Usuário"),
+                role: activeRole
+              }
+            });
+          }
+        }
+      } catch (jwtErr) {
+        console.warn("[SEIE /api/auth/session] Falha ao inspecionar JWT:", jwtErr);
       }
     }
 
