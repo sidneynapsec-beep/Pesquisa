@@ -1,5 +1,45 @@
 [
   {
+    "id": "req-1790190917239-b2o2",
+    "email": "novo.rewrite.1790190917235@seie.gov.br",
+    "name": "Maria Santos",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "",
+    "status": "pending",
+    "requestedAt": "2026-09-23T19:15:17.239Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790190917232-cwg1",
+    "email": "novo.usuario.1790190917226@instituto.se.gov.br",
+    "name": "Pesquisador João Silva",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "Instituto de Pesquisa",
+    "status": "pending",
+    "requestedAt": "2026-09-23T19:15:17.232Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790190794003-eb1q",
+    "email": "novo.rewrite.1790190794001@seie.gov.br",
+    "name": "Maria Santos",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "",
+    "status": "pending",
+    "requestedAt": "2026-09-23T19:13:14.003Z",
+    "notes": ""
+  },
+  {
+    "id": "req-1790190793998-arsn",
+    "email": "novo.usuario.1790190793990@instituto.se.gov.br",
+    "name": "Pesquisador João Silva",
+    "passwordHash": "238d8875bd72b4cd600cb5f444e373c9f287e171828f116f5ae14f34dbdf3748",
+    "organization": "Instituto de Pesquisa",
+    "status": "pending",
+    "requestedAt": "2026-09-23T19:13:13.998Z",
+    "notes": ""
+  },
+  {
     "id": "req-1790188944894-j0xt",
     "email": "novo.rewrite.1790188944890@seie.gov.br",
     "name": "Maria Santos",

@@ -5,11 +5,10 @@ import crypto from "crypto";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import { createServer as createViteServer } from "vite";
 import * as archiverModule from "archiver";
 const archiver: any = (archiverModule as any).default || archiverModule;
 import admin from "firebase-admin";
-import { DigitalRadarManager } from "../server/digitalRadar";
+import { DigitalRadarManager } from "./digitalRadar.js";
 import { getCanonicalTerritoriesData, CANONICAL_SERGIPE_TERRITORIES } from "../src/data/canonicalTerritories";
 import { processSurveyMicrodata } from "../src/utils/fileParser";
 
@@ -2131,6 +2130,7 @@ process.on("uncaughtException", (err: any) => {
 // Serve frontend assets in production and Vite middleware in development
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
