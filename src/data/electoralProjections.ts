@@ -1,7 +1,7 @@
 import { CANDIDATOS_OFICIAIS_2026, OfficialCandidate2026 } from "./candidatosOficiais2026";
 import { Poll, RoleStatistics } from "../types";
 import { DataProvenance, createProjectionProvenance } from "../types/provenance";
-import { parseFlexibleDate } from "../utils/fileParser";
+import { parseFlexibleDate, parseDateRange } from "../utils/fileParser";
 import {
   TSE_SERGIPE_OFFICIAL_REFERENCE,
   SERGIPE_VALID_VOTES_PROJECTION,
@@ -348,15 +348,42 @@ export function getProjectionsByRole(
     ];
     for (const c of candidates) {
       const parsed = parseFlexibleDate(c);
-      if (parsed) {
+      if (parsed && parsed !== "1970-01-01") {
         const t = new Date(parsed + "T12:00:00").getTime();
+        if (!isNaN(t)) return t;
+      }
+    }
+    if (p.fileName) {
+      const range = parseDateRange(p.fileName);
+      if (range.median && range.median !== "1970-01-01") {
+        const t = new Date(range.median + "T12:00:00").getTime();
         if (!isNaN(t)) return t;
       }
     }
     return 0;
   };
 
-  const sortedPolls = [...customPolls].sort((a, b) => getPollTime(a) - getPollTime(b));
+  // Filter polls that contain data for this specific role so that a poll without this role
+  // is never mistakenly selected as the "latest poll" for this role.
+  const pollsWithRole = customPolls.filter((p) => {
+    const vr = p.roleValidResults;
+    const tr = p.roleResults;
+    if (vr && vr[role] && Object.keys(vr[role]).length > 0) return true;
+    if (role === "Senador" && vr && ((vr["1º Senador"] && Object.keys(vr["1º Senador"]).length > 0) || (vr["2º Senador"] && Object.keys(vr["2º Senador"]).length > 0))) return true;
+
+    if (tr && tr[role] && Object.keys(tr[role]).length > 0) return true;
+    if (role === "Senador" && tr && ((tr["1º Senador"] && Object.keys(tr["1º Senador"]).length > 0) || (tr["2º Senador"] && Object.keys(tr["2º Senador"]).length > 0))) return true;
+
+    if (p.results && Object.keys(p.results).length > 0) {
+      const hasAnyCand = candidatesInRole.some(c => findCandidateInPollResults(c.name, p.results) !== null);
+      if (hasAnyCand) return true;
+      if (role === "Governador") return true;
+    }
+    return false;
+  });
+
+  const activePollsForRole = pollsWithRole.length > 0 ? pollsWithRole : customPolls;
+  const sortedPolls = [...activePollsForRole].sort((a, b) => getPollTime(a) - getPollTime(b));
 
   const pCount = sortedPolls.length;
   const latestPoll = sortedPolls[pCount - 1];
@@ -377,8 +404,17 @@ export function getProjectionsByRole(
     ];
     for (const c of candidates) {
       const parsed = parseFlexibleDate(c);
-      if (parsed) {
+      if (parsed && parsed !== "1970-01-01") {
         const parts = parsed.split("-");
+        if (parts.length === 3) {
+          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+      }
+    }
+    if (poll.fileName) {
+      const range = parseDateRange(poll.fileName);
+      if (range.median && range.median !== "1970-01-01") {
+        const parts = range.median.split("-");
         if (parts.length === 3) {
           return `${parts[2]}/${parts[1]}/${parts[0]}`;
         }
@@ -400,8 +436,21 @@ export function getProjectionsByRole(
 
   // Helper to retrieve valid and total percentages for a given poll
   const getPollPercentages = (poll: Poll) => {
-    const validMap = (poll.roleValidResults && poll.roleValidResults[role]) || {};
-    const totalMap = (poll.roleResults && poll.roleResults[role]) || poll.results || {};
+    let validMap = (poll.roleValidResults && poll.roleValidResults[role]) || {};
+    let totalMap = (poll.roleResults && poll.roleResults[role]) || {};
+
+    if (role === "Senador") {
+      if (Object.keys(validMap).length === 0 && poll.roleValidResults && poll.roleValidResults["1º Senador"]) {
+        validMap = poll.roleValidResults["1º Senador"];
+      }
+      if (Object.keys(totalMap).length === 0 && poll.roleResults && poll.roleResults["1º Senador"]) {
+        totalMap = poll.roleResults["1º Senador"];
+      }
+    }
+
+    if (Object.keys(totalMap).length === 0) {
+      totalMap = poll.results || {};
+    }
     
     // If validMap is empty but totalMap has data, re-normalize nominal candidates
     let resolvedValid = validMap;

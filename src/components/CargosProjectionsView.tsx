@@ -32,7 +32,10 @@ import {
   ShieldCheck,
   HelpCircle,
   RefreshCw,
-  Zap
+  Zap,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 interface CargosProjectionsViewProps {
@@ -50,6 +53,29 @@ export default function CargosProjectionsView({ role, polls: propPolls = [] }: C
   const [selectedCoalition, setSelectedCoalition] = useState("all");
   const [expandedParty, setExpandedParty] = useState<string | null>(null);
 
+  const [sortField, setSortField] = useState<"rank" | "validos" | "totais" | "baseRecente" | "segundaBase" | "primeiraBase" | "votos">("rank");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (field: "rank" | "validos" | "totais" | "baseRecente" | "segundaBase" | "primeiraBase" | "votos") => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+    } else {
+      setSortField(field);
+      setSortOrder(field === "rank" ? "asc" : "desc");
+    }
+  };
+
+  const renderSortIndicator = (field: "rank" | "validos" | "totais" | "baseRecente" | "segundaBase" | "primeiraBase" | "votos") => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3 h-3 text-slate-400 inline ml-1 opacity-40 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortOrder === "asc" ? (
+      <ArrowUp className="w-3 h-3 text-amber-500 inline ml-1" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-amber-500 inline ml-1" />
+    );
+  };
+
   const { candidates: projections, proportionalResult, pollHeaderInfo, roleStats } = useMemo(() => {
     return getProjectionsByRole(role, activePolls);
   }, [role, activePolls]);
@@ -63,7 +89,7 @@ export default function CargosProjectionsView({ role, polls: propPolls = [] }: C
 
   // Filtered dataset
   const filteredData = useMemo(() => {
-    return projections.filter((item) => {
+    const list = projections.filter((item) => {
       const matchSearch =
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.number.includes(searchTerm) ||
@@ -80,7 +106,43 @@ export default function CargosProjectionsView({ role, polls: propPolls = [] }: C
 
       return matchSearch && matchCoalition && matchFilter;
     });
-  }, [projections, searchTerm, selectedCoalition, filterMode]);
+
+    return [...list].sort((a, b) => {
+      let valA = 0;
+      let valB = 0;
+      switch (sortField) {
+        case "rank":
+          return sortOrder === "asc" ? a.rank - b.rank : b.rank - a.rank;
+        case "validos":
+          valA = a.pollAverage;
+          valB = b.pollAverage;
+          break;
+        case "totais":
+          valA = a.pollAverageTotal;
+          valB = b.pollAverageTotal;
+          break;
+        case "baseRecente":
+          valA = metricDisplay === "validos" ? a.pollDate3 : a.pollDate3Total;
+          valB = metricDisplay === "validos" ? b.pollDate3 : b.pollDate3Total;
+          break;
+        case "segundaBase":
+          valA = metricDisplay === "validos" ? a.pollDate2 : a.pollDate2Total;
+          valB = metricDisplay === "validos" ? b.pollDate2 : b.pollDate2Total;
+          break;
+        case "primeiraBase":
+          valA = metricDisplay === "validos" ? a.pollDate1 : a.pollDate1Total;
+          valB = metricDisplay === "validos" ? b.pollDate1 : b.pollDate1Total;
+          break;
+        case "votos":
+          valA = a.projectedVotes;
+          valB = b.projectedVotes;
+          break;
+        default:
+          return a.rank - b.rank;
+      }
+      return sortOrder === "asc" ? valA - valB : valB - valA;
+    });
+  }, [projections, searchTerm, selectedCoalition, filterMode, sortField, sortOrder, metricDisplay]);
 
   // Counts and quota information per role
   const roleConfig = useMemo(() => {
@@ -754,63 +816,125 @@ export default function CargosProjectionsView({ role, polls: propPolls = [] }: C
           <table className="w-full text-left border-collapse text-xs">
             <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-xs">
               <tr className="border-b border-slate-200 dark:border-slate-700 text-[10px] font-mono uppercase tracking-wider">
-                <th className="py-3 px-3 text-center w-12">Pos.</th>
+                <th
+                  onClick={() => handleSort("rank")}
+                  className="py-3 px-3 text-center w-12 cursor-pointer select-none group hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
+                  title="Ordenar por Posição / Classificação"
+                >
+                  Pos. {renderSortIndicator("rank")}
+                </th>
                 <th className="py-3 px-3 text-center w-16">Nº Urna</th>
                 <th className="py-3 px-4 min-w-[200px]">Candidato / Opção da Amostra</th>
 
                 {/* Dynamic Columns based on metricDisplay */}
                 {metricDisplay === "dual" ? (
                   <>
-                    <th className="py-3 px-3 text-center bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-black border-l border-r border-slate-200 dark:border-slate-700">
-                      % Válidos (TSE)
+                    <th
+                      onClick={() => handleSort("validos")}
+                      className="py-3 px-3 text-center bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-black border-l border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors"
+                      title="Ordenar por Média de Votos Válidos"
+                    >
+                      % Válidos (TSE) {renderSortIndicator("validos")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-blue-50/80 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 font-black border-r border-slate-200 dark:border-slate-700">
-                      % Totais (Amostra 100%)
+                    <th
+                      onClick={() => handleSort("totais")}
+                      className="py-3 px-3 text-center bg-blue-50/80 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 font-black border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+                      title="Ordenar por Média de Votos Totais"
+                    >
+                      % Totais (Amostra 100%) {renderSortIndicator("totais")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300 font-black border-r border-slate-200 dark:border-slate-700">
-                      Base Recente ({pollHeaderInfo.date3})
+                    <th
+                      onClick={() => handleSort("baseRecente")}
+                      className="py-3 px-3 text-center bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300 font-black border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
+                      title="Ordenar pela Base Mais Recente"
+                    >
+                      Base Recente ({pollHeaderInfo.date3}) {renderSortIndicator("baseRecente")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-slate-50 dark:bg-slate-800/80 border-r border-slate-200 dark:border-slate-700">
-                      2ª Base ({pollHeaderInfo.date2})
+                    <th
+                      onClick={() => handleSort("segundaBase")}
+                      className="py-3 px-3 text-center bg-slate-50 dark:bg-slate-800/80 border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
+                      title="Ordenar pela 2ª Base"
+                    >
+                      2ª Base ({pollHeaderInfo.date2}) {renderSortIndicator("segundaBase")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-slate-50 dark:bg-slate-800/80 border-r border-slate-200 dark:border-slate-700">
-                      1ª Base ({pollHeaderInfo.date1})
+                    <th
+                      onClick={() => handleSort("primeiraBase")}
+                      className="py-3 px-3 text-center bg-slate-50 dark:bg-slate-800/80 border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
+                      title="Ordenar pela 1ª Base"
+                    >
+                      1ª Base ({pollHeaderInfo.date1}) {renderSortIndicator("primeiraBase")}
                     </th>
                   </>
                 ) : metricDisplay === "validos" ? (
                   <>
-                    <th className="py-3 px-3 text-center bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300 font-black border-l border-r border-slate-200 dark:border-slate-700">
-                      Base Recente ({pollHeaderInfo.date3})
+                    <th
+                      onClick={() => handleSort("baseRecente")}
+                      className="py-3 px-3 text-center bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300 font-black border-l border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
+                      title="Ordenar pela Base Mais Recente"
+                    >
+                      Base Recente ({pollHeaderInfo.date3}) {renderSortIndicator("baseRecente")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 font-bold border-r border-slate-200 dark:border-slate-700">
-                      2ª Base ({pollHeaderInfo.date2})
+                    <th
+                      onClick={() => handleSort("segundaBase")}
+                      className="py-3 px-3 text-center bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 font-bold border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors"
+                      title="Ordenar pela 2ª Base"
+                    >
+                      2ª Base ({pollHeaderInfo.date2}) {renderSortIndicator("segundaBase")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 font-bold border-r border-slate-200 dark:border-slate-700">
-                      1ª Base ({pollHeaderInfo.date1})
+                    <th
+                      onClick={() => handleSort("primeiraBase")}
+                      className="py-3 px-3 text-center bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 font-bold border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors"
+                      title="Ordenar pela 1ª Base"
+                    >
+                      1ª Base ({pollHeaderInfo.date1}) {renderSortIndicator("primeiraBase")}
                     </th>
-                    <th className="py-3 px-4 text-center bg-emerald-100/80 dark:bg-emerald-900/50 font-black text-emerald-900 dark:text-emerald-300 border-r border-slate-200 dark:border-slate-700">
-                      Média % Válidos (TSE)
+                    <th
+                      onClick={() => handleSort("validos")}
+                      className="py-3 px-4 text-center bg-emerald-100/80 dark:bg-emerald-900/50 font-black text-emerald-900 dark:text-emerald-300 border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-emerald-200 dark:hover:bg-emerald-800/60 transition-colors"
+                      title="Ordenar por Média de Votos Válidos"
+                    >
+                      Média % Válidos (TSE) {renderSortIndicator("validos")}
                     </th>
                   </>
                 ) : (
                   <>
-                    <th className="py-3 px-3 text-center bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300 font-black border-l border-r border-slate-200 dark:border-slate-700">
-                      Base Recente ({pollHeaderInfo.date3})
+                    <th
+                      onClick={() => handleSort("baseRecente")}
+                      className="py-3 px-3 text-center bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300 font-black border-l border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
+                      title="Ordenar pela Base Mais Recente"
+                    >
+                      Base Recente ({pollHeaderInfo.date3}) {renderSortIndicator("baseRecente")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 font-bold border-r border-slate-200 dark:border-slate-700">
-                      2ª Base ({pollHeaderInfo.date2})
+                    <th
+                      onClick={() => handleSort("segundaBase")}
+                      className="py-3 px-3 text-center bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 font-bold border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+                      title="Ordenar pela 2ª Base"
+                    >
+                      2ª Base ({pollHeaderInfo.date2}) {renderSortIndicator("segundaBase")}
                     </th>
-                    <th className="py-3 px-3 text-center bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 font-bold border-r border-slate-200 dark:border-slate-700">
-                      1ª Base ({pollHeaderInfo.date1})
+                    <th
+                      onClick={() => handleSort("primeiraBase")}
+                      className="py-3 px-3 text-center bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 font-bold border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+                      title="Ordenar pela 1ª Base"
+                    >
+                      1ª Base ({pollHeaderInfo.date1}) {renderSortIndicator("primeiraBase")}
                     </th>
-                    <th className="py-3 px-4 text-center bg-blue-100/80 dark:bg-blue-900/50 font-black text-blue-900 dark:text-blue-300 border-r border-slate-200 dark:border-slate-700">
-                      Média % Totais (Amostra)
+                    <th
+                      onClick={() => handleSort("totais")}
+                      className="py-3 px-4 text-center bg-blue-100/80 dark:bg-blue-900/50 font-black text-blue-900 dark:text-blue-300 border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"
+                      title="Ordenar por Média de Votos Totais"
+                    >
+                      Média % Totais (Amostra) {renderSortIndicator("totais")}
                     </th>
                   </>
                 )}
 
-                <th className="py-3 px-4 text-center bg-slate-200/50 dark:bg-slate-800/80 font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700">
-                  Qtd. Votos Projetados
+                <th
+                  onClick={() => handleSort("votos")}
+                  className="py-3 px-4 text-center bg-slate-200/50 dark:bg-slate-800/80 font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 cursor-pointer select-none group hover:bg-slate-300/60 dark:hover:bg-slate-700/60 transition-colors"
+                  title="Ordenar por Qtd. Votos Projetados"
+                >
+                  Qtd. Votos Projetados {renderSortIndicator("votos")}
                 </th>
                 <th className="py-3 px-4 text-center">Projeção da Vaga (Eleito)</th>
               </tr>

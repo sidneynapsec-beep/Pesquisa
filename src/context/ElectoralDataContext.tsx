@@ -580,15 +580,40 @@ export const ElectoralDataProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
-      if (serverPolls.length > 0) {
-        finalPolls = serverPolls.filter(isValidPoll);
-      } else if (finalDatasets.length > 0) {
-        // Auto-reconstruct polls from datasets
-        console.log("[ElectoralData] Reconstruindo pesquisas a partir dos datasets...");
-        finalPolls = finalDatasets.map(convertDatasetToPoll).filter(isValidPoll);
-      } else if (localPolls.length > 0) {
-        finalPolls = localPolls.filter(isValidPoll);
+      // Merged polls: ensure all datasets in finalDatasets are converted and included
+      const datasetPolls = finalDatasets.map(convertDatasetToPoll).filter(isValidPoll);
+      const pollMap = new Map<string, Poll>();
+
+      // Seed with converted dataset polls (which carry clean dates and microdata)
+      for (const dp of datasetPolls) {
+        const key = dp.fileName || dp.id;
+        pollMap.set(key, dp);
       }
+
+      // Overlay serverPolls or localPolls
+      const sourcePolls = serverPolls.length > 0 ? serverPolls : localPolls;
+      for (const sp of sourcePolls) {
+        const key = sp.fileName || sp.id;
+        const existing = pollMap.get(key);
+        if (existing) {
+          const resolvedDate = (sp.medianDate && sp.medianDate !== "1970-01-01") ? sp.medianDate : existing.medianDate;
+          const resolvedStart = (sp.fieldworkStart && sp.fieldworkStart !== "1970-01-01") ? sp.fieldworkStart : existing.fieldworkStart;
+          const resolvedEnd = (sp.fieldworkEnd && sp.fieldworkEnd !== "1970-01-01") ? sp.fieldworkEnd : existing.fieldworkEnd;
+          pollMap.set(key, {
+            ...existing,
+            ...sp,
+            fieldworkStart: resolvedStart,
+            fieldworkEnd: resolvedEnd,
+            medianDate: resolvedDate,
+            roleResults: (existing.roleResults && Object.keys(existing.roleResults).length > 0) ? existing.roleResults : sp.roleResults,
+            roleValidResults: (existing.roleValidResults && Object.keys(existing.roleValidResults).length > 0) ? existing.roleValidResults : sp.roleValidResults
+          });
+        } else {
+          pollMap.set(key, sp);
+        }
+      }
+
+      finalPolls = Array.from(pollMap.values()).filter(isValidPoll);
 
       const validFinalPolls = finalPolls.filter(isValidPoll);
       if (validFinalPolls.length > 0) {

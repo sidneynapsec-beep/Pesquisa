@@ -169,10 +169,6 @@ export default function AuthScreen() {
                 </>
               )}
             </button>
-
-            <p className="text-[11px] text-center text-slate-400 mt-2 font-mono">
-              Acesso instantâneo • Sidney Batista e equipe autorizada
-            </p>
           </div>
 
           {/* Feedback de Erro do Google */}

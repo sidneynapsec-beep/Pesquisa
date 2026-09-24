@@ -370,17 +370,50 @@ try {
   console.error("[Storage] Erro ao ler arquivo persistent_polls.json:", e);
 }
 
-// Auto-recover/repopulate polls from datasets if polls is empty
-if (polls.length === 0 && datasets.length > 0) {
-  console.log("[Storage] Auto-recuperando pesquisas a partir dos datasets persistentes existentes...");
+// Always synchronize datasets into polls so that newly ingested or persistent datasets
+// are immediately reflected with fresh dates and microdata
+if (datasets.length > 0) {
+  let pollsUpdated = false;
   datasets.forEach((ds) => {
     const converted = convertDatasetToPoll(ds);
-    if (converted && isValidPoll(converted)) {
+    if (!converted || !isValidPoll(converted)) return;
+
+    const existingIdx = polls.findIndex(p =>
+      (p.fileName && ds.fileName && p.fileName === ds.fileName) ||
+      p.id === converted.id ||
+      (ds.fileName && p.id === `poll-${ds.fileName.replace(/[^a-zA-Z0-9_-]/g, "_")}`)
+    );
+
+    if (existingIdx >= 0) {
+      const existing = polls[existingIdx];
+      const needsDateFix = !existing.medianDate || existing.medianDate === "1970-01-01" || !existing.fieldworkStart || existing.fieldworkStart === "1970-01-01";
+      const needsRoleFix = !existing.roleResults || Object.keys(existing.roleResults).length === 0;
+
+      if (needsDateFix || needsRoleFix || !existing.roleResults?.["Senador"] || ds.medianDate !== existing.medianDate) {
+        polls[existingIdx] = {
+          ...existing,
+          ...converted,
+          id: existing.id
+        };
+        pollsUpdated = true;
+      }
+    } else {
       polls.push(converted);
+      pollsUpdated = true;
+      console.log(`[Storage] Adicionada pesquisa a partir do dataset: ${ds.fileName}`);
     }
   });
-  savePollsToDisk();
-  console.log(`[Storage] ${polls.length} pesquisas recuperadas e salvas com sucesso.`);
+
+  if (pollsUpdated) {
+    try {
+      fs.writeFileSync(POLLS_FILE, JSON.stringify(polls, null, 2), "utf-8");
+      const BACKUP_POLLS = path.join(DATA_DIR, "backup_polls.json");
+      fs.writeFileSync(BACKUP_POLLS, JSON.stringify(polls, null, 2), "utf-8");
+      console.log(`[Storage] Pesquisas sincronizadas e salvas com sucesso (${polls.length} pesquisas ativas).`);
+    } catch (e) {
+      console.error("[Storage] Erro ao salvar sincronização de pesquisas:", e);
+    }
+  }
 }
 
 // Mutex e escrita atômica em disco (.tmp + rename) para blindagem contra corrupção
