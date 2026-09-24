@@ -189,6 +189,7 @@
     "requestedAt": "2026-01-01T00:00:00.000Z",
     "approvedAt": "2026-01-01T00:00:00.000Z",
     "approvedBy": "Sistema SEIE",
-    "notes": "Administrador Central e Proprietário Oficial do Sistema"
+    "notes": "Administrador Central e Proprietário Oficial do Sistema",
+    "passwordHash": "a345d13c75127c5e97315832bbf440a6c76e93fcf54fdd9939528fd718ba661b"
   }
 ]

@@ -4,8 +4,7 @@ import { setUnauthorizedHandler } from "../lib/apiAuth";
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
-  signOut as firebaseSignOut,
-  onAuthStateChanged
+  signOut as firebaseSignOut
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
 
@@ -411,42 +410,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Monitorar alterações de autenticação diretamente do Firebase (Google Auth)
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        if (typeof window !== "undefined" && sessionStorage.getItem("seie_explicit_logout") === "true") {
-          return;
-        }
-        try {
-          const cleanEmail = (fbUser.email || "").toLowerCase();
-          const token = await fbUser.getIdToken();
-          const isSidney = cleanEmail === "sidneynapsec@gmail.com";
-          const resolvedRole: UserRole = isSidney ? "Administrator" : "Viewer";
-
-          const appUser: AppUser = {
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || (isSidney ? "Sidney (Administrador SEIE)" : fbUser.email?.split("@")[0] || "Usuário"),
-            photoURL: fbUser.photoURL,
-            role: resolvedRole,
-            getIdToken: () => fbUser.getIdToken()
-          };
-
-          localStorage.setItem("seie_admin_token", token);
-          localStorage.setItem("seie_admin_user", JSON.stringify(appUser));
-          setUser(appUser);
-          setRole(resolvedRole);
-          setStatus("AUTHENTICATED");
-          setPendingInfo(null);
-        } catch (err) {
-          console.warn("[AuthContext] Erro ao sincronizar sessão Firebase:", err);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  // Monitorar alterações de autenticação diretamente do Firebase (desativado para exigir login com senha)
+  // Autenticação agora é estritamente via e-mail e senha pelo backend (/api/auth/admin-login)
 
   const signOut = useCallback(async () => {
     try {

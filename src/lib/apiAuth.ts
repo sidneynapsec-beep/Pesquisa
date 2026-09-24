@@ -64,33 +64,10 @@ export async function authenticatedFetch(input: RequestInfo | URL, init?: Reques
     headers: authHeaders
   });
 
-  // Se receber 401, tentar renovar a sessão do administrador oficial antes de deslogar
+  // Se receber 401, limpar credenciais e redirecionar para tela de autenticação
   if (response.status === 401 && typeof window !== "undefined") {
-    try {
-      const refreshRes = await fetch("/api/auth/admin-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "sidneynapsec@gmail.com" })
-      });
-      if (refreshRes.ok) {
-        const refreshData = await refreshRes.json();
-        if (refreshData.status === "success" && refreshData.token) {
-          localStorage.setItem("seie_admin_token", refreshData.token);
-          localStorage.setItem("seie_admin_user", JSON.stringify(refreshData.user));
-          authHeaders["Authorization"] = `Bearer ${refreshData.token}`;
-          response = await fetch(input, {
-            ...init,
-            headers: authHeaders
-          });
-          if (response.status !== 401) {
-            return response;
-          }
-        }
-      }
-    } catch (refreshErr) {
-      console.warn("[apiAuth] Erro ao autorenovar sessão de administrador:", refreshErr);
-    }
-
+    localStorage.removeItem("seie_admin_token");
+    localStorage.removeItem("seie_admin_user");
     triggerUnauthorized();
   }
 

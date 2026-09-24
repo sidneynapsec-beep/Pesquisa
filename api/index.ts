@@ -570,16 +570,19 @@ try {
   console.error("[Storage] Erro ao carregar access_requests.json:", e);
 }
 
-// Garantir que Sidney esteja SEMPRE presente como Administrador Aprovado
+// Garantir que Sidney esteja SEMPRE presente como Administrador Aprovado com a senha correta
 const sidneyIdx = accessRequests.findIndex(r => r.email.toLowerCase() === "sidneynapsec@gmail.com");
+const sidneyPasswordHash = hashUserPassword(getAdminPassword());
 if (sidneyIdx >= 0) {
   accessRequests[sidneyIdx].status = "approved";
   accessRequests[sidneyIdx].grantedRole = "Administrator";
+  accessRequests[sidneyIdx].passwordHash = sidneyPasswordHash;
 } else {
   accessRequests.unshift({
     id: "admin-sidneynapsec",
     email: "sidneynapsec@gmail.com",
     name: "Sidney",
+    passwordHash: sidneyPasswordHash,
     organization: "CTAS Consultoria - Sergipe",
     status: "approved",
     grantedRole: "Administrator",
@@ -1218,12 +1221,34 @@ const handleAdminLogin: express.RequestHandler = (req, res) => {
       });
     }
 
-    // 1. Administrador Central Sidney (Login Direto Sem Dependências Quebradas)
+    // 1. Administrador Central Sidney (Validação estrita da senha Sidney@2026)
     if (requestedEmail === "sidneynapsec@gmail.com") {
+      const expectedAdminPassword = getAdminPassword();
+      const sidneyRecord = accessRequests.find((r) => r.email.toLowerCase() === "sidneynapsec@gmail.com");
+      const matchesPlain = inputPass === expectedAdminPassword;
+      const matchesHash = !!(sidneyRecord?.passwordHash && hashUserPassword(inputPass) === sidneyRecord.passwordHash);
+
+      if (!matchesPlain && !matchesHash) {
+        return res.status(401).json({
+          success: false,
+          status: "error",
+          code: "INVALID_CREDENTIALS",
+          error: "E-mail ou senha incorretos.",
+          message: "E-mail ou senha incorretos."
+        });
+      }
+
+      // Senha confirmada: sincronizar hash se necessário
+      if (sidneyRecord) {
+        sidneyRecord.passwordHash = hashUserPassword(inputPass);
+        saveAccessRequestsToDisk();
+      }
+
+      const token = generateAdminToken(requestedEmail, "Administrator");
       return res.status(200).json({
         success: true,
         status: "success",
-        token: "seie_bypass_token_admin_sidney",
+        token,
         user: {
           uid: "admin-sidneynapsec",
           email: "sidneynapsec@gmail.com",
